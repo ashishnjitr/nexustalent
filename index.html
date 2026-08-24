@@ -10,7 +10,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Document Parsers (PDF.js & Mammoth.js for Word DOCX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
     <script>
+        // Configure PDF.js Worker
+        if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -51,7 +60,7 @@
 
     <div id="app" class="flex h-full w-full relative overflow-hidden">
         
-        <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden lg:hidden"></div>
+        <div id="mobile-sidebar-overlay" onclick="window.toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden lg:hidden"></div>
 
         <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-transform duration-300 transform -translate-x-full lg:translate-x-0 shrink-0">
             <div class="p-5 flex items-center justify-between border-b border-slate-800">
@@ -64,29 +73,29 @@
                         <p class="text-[11px] text-slate-400">Autonomous Talent Hub</p>
                     </div>
                 </div>
-                <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white">
+                <button onclick="window.toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
             <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                <button onclick="window.switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
                     <i class="fa-solid fa-chart-pie w-5"></i>
                     <span>Dashboard</span>
                 </button>
-                <button onclick="switchTab('jobs')" id="nav-jobs" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                <button onclick="window.switchTab('jobs')" id="nav-jobs" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
                     <i class="fa-solid fa-briefcase w-5"></i>
                     <span>Job Requisitions</span>
                 </button>
-                <button onclick="switchTab('candidates')" id="nav-candidates" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                <button onclick="window.switchTab('candidates')" id="nav-candidates" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
                     <i class="fa-solid fa-users w-5"></i>
                     <span>Candidate Pipeline</span>
                 </button>
-                <button onclick="switchTab('screener')" id="nav-screener" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                <button onclick="window.switchTab('screener')" id="nav-screener" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
                     <i class="fa-solid fa-wand-magic-sparkles w-5"></i>
                     <span>AI Resume Analyzer</span>
                 </button>
-                <button onclick="switchTab('interviewer')" id="nav-interviewer" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                <button onclick="window.switchTab('interviewer')" id="nav-interviewer" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
                     <i class="fa-solid fa-comments w-5"></i>
                     <span>AI Screening Chat</span>
                 </button>
@@ -103,7 +112,7 @@
                             <p id="user-display-email" class="text-[10px] text-slate-400 truncate">Not authenticated</p>
                         </div>
                     </div>
-                    <button onclick="openModal('auth-modal')" id="btn-sidebar-auth" title="Sign In / Switch Profile" class="text-slate-400 hover:text-white p-1 text-xs">
+                    <button onclick="window.openModal('auth-modal')" id="btn-sidebar-auth" title="Sign In / Switch Profile" class="text-slate-400 hover:text-white p-1 text-xs">
                         <i class="fa-solid fa-right-to-bracket"></i>
                     </button>
                 </div>
@@ -122,7 +131,7 @@
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 w-full">
             <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between shrink-0">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                    <button onclick="window.toggleMobileSidebar()" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
                     <h2 id="page-title" class="text-base sm:text-lg font-bold text-slate-800">Dashboard Overview</h2>
@@ -133,13 +142,13 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
-                    <button onclick="openModal('new-job-modal')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm flex items-center space-x-2">
+                    <button onclick="window.openModal('new-job-modal')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm flex items-center space-x-2">
                         <i class="fa-solid fa-plus"></i>
                         <span class="hidden sm:inline">New Job Requisition</span>
                         <span class="sm:hidden">New Job</span>
                     </button>
                     
-                    <button onclick="openModal('auth-modal')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 border border-slate-200">
+                    <button onclick="window.openModal('auth-modal')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 border border-slate-200">
                         <i class="fa-solid fa-user-circle text-indigo-600 text-sm"></i>
                         <span id="top-auth-btn-text" class="hidden sm:inline">Sign In / Profile</span>
                     </button>
@@ -195,7 +204,7 @@
                                     <h4 class="font-bold text-slate-800 text-base">Top Ranked Candidates</h4>
                                     <p class="text-xs text-slate-400">Your private talent matches generated by Gemini AI</p>
                                 </div>
-                                <button onclick="switchTab('candidates')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Full Pipeline &rarr;</button>
+                                <button onclick="window.switchTab('candidates')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Full Pipeline &rarr;</button>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
@@ -226,7 +235,7 @@
                                 </div>
                             </div>
                             <div class="pt-4 border-t border-slate-100">
-                                <button onclick="switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
+                                <button onclick="window.switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
                                     <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Launch Resume Analyzer
                                 </button>
                             </div>
@@ -240,7 +249,7 @@
                             <h3 class="text-xl font-bold text-slate-800">Job Requisitions</h3>
                             <p class="text-xs text-slate-400">Manage open positions and define targeted AI evaluation metrics for your account.</p>
                         </div>
-                        <button onclick="openModal('new-job-modal')" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm flex items-center space-x-2 self-start sm:self-auto">
+                        <button onclick="window.openModal('new-job-modal')" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm flex items-center space-x-2 self-start sm:self-auto">
                             <i class="fa-solid fa-plus"></i>
                             <span>Create Position</span>
                         </button>
@@ -260,12 +269,12 @@
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative flex-1 sm:w-64">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                <input type="text" id="search-candidates" oninput="renderCandidates()" placeholder="Search candidates..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <input type="text" id="search-candidates" oninput="window.renderCandidates()" placeholder="Search candidates..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
-                            <select id="filter-job" onchange="renderCandidates()" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select id="filter-job" onchange="window.renderCandidates()" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <option value="all">All Roles</option>
                             </select>
-                            <button onclick="switchTab('screener')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 shrink-0">
+                            <button onclick="window.switchTab('screener')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 shrink-0">
                                 + Add Candidate
                             </button>
                         </div>
@@ -317,21 +326,38 @@
                             <div>
                                 <div class="flex justify-between items-center mb-2">
                                     <label class="block text-xs font-semibold text-slate-600 uppercase">Upload or Paste Resume</label>
-                                    <button onclick="loadSampleResume()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
+                                    <button onclick="window.loadSampleResume()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
                                         <i class="fa-solid fa-file-lines"></i>
                                         <span>Load Sample Resume</span>
                                     </button>
                                 </div>
-                                <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/30 p-4 rounded-xl text-center cursor-pointer transition-all mb-3">
-                                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500 mb-1"></i>
-                                    <p class="text-xs font-medium text-slate-700">Click to upload or drag & drop resume file (.txt, .md, text)</p>
-                                    <input type="file" id="file-input" onchange="handleFileUpload(event)" accept=".txt,.md,.text" class="hidden">
+                                <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/30 p-4 rounded-xl text-center cursor-pointer transition-all mb-3 relative group">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500 mb-1 group-hover:scale-110 transition-transform"></i>
+                                    <p class="text-xs font-medium text-slate-700">Click to upload or drag & drop resume file</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Supports PDF, DOCX, TXT, MD, RTF & Image Resumes (PNG, JPG, WEBP)</p>
+                                    <input type="file" id="file-input" onchange="window.handleFileUpload(event)" accept=".pdf,.docx,.doc,.txt,.md,.rtf,.png,.jpg,.jpeg,.webp" class="hidden">
                                 </div>
-                                <textarea id="screener-resume" rows="6" placeholder="Paste full resume content here..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+
+                                <div id="file-info-badge" class="hidden mb-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
+                                    <div class="flex items-center space-x-3 overflow-hidden">
+                                        <div id="file-type-icon" class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </div>
+                                        <div class="truncate">
+                                            <p id="file-name-display" class="text-xs font-semibold text-slate-800 truncate">resume.pdf</p>
+                                            <p id="file-status-display" class="text-[10px] text-indigo-600 font-medium">Text parsed successfully</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="window.clearUploadedFile()" class="text-slate-400 hover:text-red-500 p-1 text-xs" title="Clear File">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <textarea id="screener-resume" rows="6" placeholder="Extracted text or manual resume content will appear here..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                             </div>
 
                             <div class="flex justify-end">
-                                <button onclick="runAiScreening()" id="btn-run-screening" class="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center space-x-2">
+                                <button onclick="window.runAiScreening()" id="btn-run-screening" class="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center space-x-2">
                                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                                     <span>Run AI Evaluation Agent</span>
                                 </button>
@@ -399,7 +425,7 @@
                                     <p id="result-summary" class="text-xs text-slate-600 leading-relaxed"></p>
                                 </div>
                                 <div class="mt-4 pt-3 border-t border-slate-200">
-                                    <button onclick="saveScreenedCandidate()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all">
+                                    <button onclick="window.saveScreenedCandidate()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all">
                                         <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Save Candidate to Private Pipeline
                                     </button>
                                 </div>
@@ -424,7 +450,7 @@
                                 <select id="interview-candidate-select" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700">
                                     <option value="">Select Candidate to Screen</option>
                                 </select>
-                                <button onclick="startAiInterview()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shrink-0">
+                                <button onclick="window.startAiInterview()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shrink-0">
                                     Start Session
                                 </button>
                             </div>
@@ -455,7 +481,7 @@
                                 </div>
                                 <span class="text-[11px] text-slate-400 hidden sm:inline">Powered by Gemini 2.5-Flash TTS</span>
                             </div>
-                            <form onsubmit="sendChatMessage(event)" class="flex space-x-3">
+                            <form onsubmit="window.sendChatMessage(event)" class="flex space-x-3">
                                 <input type="text" id="chat-input" placeholder="Type a response or candidate answer..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <button type="submit" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shrink-0">
                                     Send
@@ -469,9 +495,10 @@
         </main>
     </div>
 
+    <!-- Auth Modal -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 relative">
-            <button onclick="closeModal('auth-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <button onclick="window.closeModal('auth-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
             
@@ -496,7 +523,7 @@
                 </div>
                 <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
                     <span class="text-slate-500">Multi-tenant Privacy: <strong class="text-emerald-600">Enforced</strong></span>
-                    <button onclick="handleSignOut()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold transition-all">
+                    <button onclick="window.handleSignOut()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold transition-all">
                         Sign Out
                     </button>
                 </div>
@@ -504,7 +531,7 @@
 
             <div id="auth-form-container" class="space-y-4">
                 <!-- Google Authentication Button -->
-                <button onclick="handleGoogleSignIn()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm flex items-center justify-center space-x-3 transition-all">
+                <button onclick="window.handleGoogleSignIn()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm flex items-center justify-center space-x-3 transition-all">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -522,11 +549,11 @@
 
                 <!-- Tabs: Login vs Register -->
                 <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                    <button onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all">Log In</button>
-                    <button onclick="switchAuthTab('signup')" id="auth-tab-signup" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all">Create Account</button>
+                    <button onclick="window.switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all">Log In</button>
+                    <button onclick="window.switchAuthTab('signup')" id="auth-tab-signup" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all">Create Account</button>
                 </div>
 
-                <form onsubmit="handleEmailAuth(event)" class="space-y-3">
+                <form onsubmit="window.handleEmailAuth(event)" class="space-y-3">
                     <div id="auth-name-field" class="hidden">
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name</label>
                         <input type="text" id="auth-name-input" placeholder="e.g. Alex Rivera" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -546,7 +573,7 @@
                 </form>
 
                 <div class="pt-2 text-center">
-                    <button onclick="handleGuestSignIn()" class="text-xs text-slate-500 hover:text-indigo-600 underline font-medium">
+                    <button onclick="window.handleGuestSignIn()" class="text-xs text-slate-500 hover:text-indigo-600 underline font-medium">
                         Continue as Guest Recruiter (Instant Test Sandbox)
                     </button>
                 </div>
@@ -554,19 +581,20 @@
         </div>
     </div>
 
+    <!-- New Job Modal -->
     <div id="new-job-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 class="font-bold text-slate-800 text-lg">Create Job Requisition</h3>
-                <button onclick="closeModal('new-job-modal')" class="text-slate-400 hover:text-slate-600">
+                <button onclick="window.closeModal('new-job-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <form onsubmit="handleCreateJob(event)" class="space-y-4">
+            <form onsubmit="window.handleCreateJob(event)" class="space-y-4">
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <label class="block text-xs font-semibold text-slate-600 uppercase">Job Title</label>
-                        <button type="button" onclick="generateJobWithAi()" id="btn-ai-gen-job" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
+                        <button type="button" onclick="window.generateJobWithAi()" id="btn-ai-gen-job" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                             <span>AI Auto-Fill Details</span>
                         </button>
@@ -586,13 +614,14 @@
                     <textarea id="job-desc-input" rows="4" required placeholder="Detailed description of responsibilities..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeModal('new-job-modal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancel</button>
+                    <button type="button" onclick="window.closeModal('new-job-modal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancel</button>
                     <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm">Create Job</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Candidate Detail Modal -->
     <div id="candidate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -606,11 +635,11 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="generateCandidateAvatar()" id="btn-gen-avatar" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+                    <button onclick="window.generateCandidateAvatar()" id="btn-gen-avatar" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
                         <i class="fa-solid fa-image text-indigo-600"></i>
                         <span>AI Headshot</span>
                     </button>
-                    <button onclick="closeModal('candidate-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <button onclick="window.closeModal('candidate-modal')" class="text-slate-400 hover:text-slate-600 p-1">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                 </div>
@@ -643,15 +672,16 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                <button onclick="openOutreachModalFromCandidate()" class="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition-all shadow-sm">
+                <button onclick="window.openOutreachModalFromCandidate()" class="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition-all shadow-sm">
                     <i class="fa-solid fa-paper-plane"></i>
                     <span>Generate Outreach Email</span>
                 </button>
-                <button onclick="closeModal('candidate-modal')" class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">Close</button>
+                <button onclick="window.closeModal('candidate-modal')" class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- Outreach Email Modal -->
     <div id="outreach-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -664,7 +694,7 @@
                         <p class="text-xs text-slate-400" id="outreach-cand-title">Personalized communication generator</p>
                     </div>
                 </div>
-                <button onclick="closeModal('outreach-modal')" class="text-slate-400 hover:text-slate-600">
+                <button onclick="window.closeModal('outreach-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -682,7 +712,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <label class="block text-xs font-semibold text-slate-600 uppercase">Generated Email Content</label>
-                        <button onclick="copyOutreachEmail()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
+                        <button onclick="window.copyOutreachEmail()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
                             <i class="fa-solid fa-copy"></i>
                             <span>Copy Content</span>
                         </button>
@@ -692,8 +722,8 @@
             </div>
 
             <div class="flex justify-end space-x-3 pt-2">
-                <button onclick="closeModal('outreach-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Close</button>
-                <button onclick="generateOutreachEmail()" id="btn-gen-outreach" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center space-x-2">
+                <button onclick="window.closeModal('outreach-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Close</button>
+                <button onclick="window.generateOutreachEmail()" id="btn-gen-outreach" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center space-x-2">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                     <span>Generate Email</span>
                 </button>
@@ -701,6 +731,7 @@
         </div>
     </div>
 
+    <!-- Application Script Module -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
@@ -722,8 +753,7 @@
             addDoc, 
             updateDoc, 
             deleteDoc, 
-            onSnapshot,
-            getDocs 
+            onSnapshot
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Application Config & Firebase Setup
@@ -740,6 +770,7 @@
         let userId = null;
         let currentSelectedCandidate = null;
         let lastScreenedCandidate = null;
+        let uploadedResumeImage = null; // Holds { mimeType, data } for image resumes
         let interviewHistory = [];
         let jobs = [];
         let candidates = [];
@@ -760,7 +791,6 @@
             { name: 'Marcus Vance', role: 'Product Designer (UI/UX)', score: 78, strengths: ['Advanced Figma proficiency', 'Clean aesthetic portfolio'], weaknesses: ['Lacks deep SaaS enterprise experience'], recommendation: 'Further Review', summary: 'Talented designer but requires assessment on complex enterprise UX workflows.', avatar: null }
         ];
 
-        // Custom Toast Notification System
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -844,18 +874,14 @@
             if (!user) return;
             const currentUid = user.uid;
 
-            // Unsubscribe existing listeners
             if (unsubscribeJobs) unsubscribeJobs();
             if (unsubscribeCandidates) unsubscribeCandidates();
 
-            // Strict MANDATORY RULE 1 - User Private Paths: /artifacts/{appId}/users/{userId}/{collectionName}
             const jobsCol = collection(db, 'artifacts', appId, 'users', currentUid, 'jobs');
             const candidatesCol = collection(db, 'artifacts', appId, 'users', currentUid, 'candidates');
 
-            // Listen to User's Jobs
             unsubscribeJobs = onSnapshot(jobsCol, async (snapshot) => {
                 if (snapshot.empty) {
-                    // Seed starter data into user's private collection if brand new
                     for (const j of initialJobs) {
                         await addDoc(jobsCol, j);
                     }
@@ -867,7 +893,6 @@
                 }
             }, (err) => console.error("Private jobs sync error:", err));
 
-            // Listen to User's Candidates
             unsubscribeCandidates = onSnapshot(candidatesCol, async (snapshot) => {
                 if (snapshot.empty) {
                     for (const c of initialCandidates) {
@@ -967,10 +992,6 @@
             }
         }
 
-        window.onload = function() {
-            initBackend();
-        };
-
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-sidebar-overlay');
@@ -1063,7 +1084,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold">${j.dept}</span>
-                            <button onclick="deleteJob('${j.id}')" title="Delete Requisition" class="text-slate-400 hover:text-red-500 text-xs transition-all">
+                            <button onclick="window.deleteJob('${j.id}')" title="Delete Requisition" class="text-slate-400 hover:text-red-500 text-xs transition-all">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -1078,7 +1099,7 @@
                     </div>
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
                         <span class="text-xs font-medium text-slate-500">${candidates.filter(c => c.role === j.title).length} Applicants</span>
-                        <button onclick="filterCandidatesByJob('${j.title}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Candidates &rarr;</button>
+                        <button onclick="window.filterCandidatesByJob('${j.title}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Candidates &rarr;</button>
                     </div>
                 </div>
             `).join('');
@@ -1111,10 +1132,10 @@
                         </span>
                     </td>
                     <td class="py-4 px-6 text-right space-x-2">
-                        <button onclick='viewCandidateDetails(${JSON.stringify(c).replace(/'/g, "&#39;")})' class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">
+                        <button onclick='window.viewCandidateDetails(${JSON.stringify(c).replace(/'/g, "&#39;")})' class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">
                             View Report
                         </button>
-                        <button onclick="deleteCandidate('${c.id}')" title="Delete Candidate" class="p-1.5 text-slate-400 hover:text-red-500 text-xs transition-all">
+                        <button onclick="window.deleteCandidate('${c.id}')" title="Delete Candidate" class="p-1.5 text-slate-400 hover:text-red-500 text-xs transition-all">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -1147,20 +1168,127 @@
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (file) {
+                processResumeFile(file);
+            }
+        }
 
+        async function processResumeFile(file) {
+            const fileName = file.name;
+            const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+            
+            showToast(`Reading resume file: ${fileName}...`, 'info');
+            uploadedResumeImage = null;
+
+            try {
+                if (ext === '.pdf') {
+                    await parsePdfFile(file);
+                } else if (ext === '.docx' || ext === '.doc') {
+                    await parseDocxFile(file);
+                } else if (['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+                    await parseImageFile(file);
+                } else {
+                    await parseTextFile(file);
+                }
+            } catch (err) {
+                console.error("Resume file parsing error:", err);
+                showToast(`Could not parse ${fileName}. You can paste raw text into the box below.`, "error");
+            }
+        }
+
+        async function parsePdfFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n\n';
+            }
+
+            if (!fullText.trim()) {
+                showToast("PDF contains scanned image pages. Converting to AI Vision OCR mode...", "info");
+                updateFileBadge(file.name, 'fa-file-pdf', 'Scanned PDF (AI Vision Enabled)');
+                document.getElementById('screener-resume').value = `[Scanned PDF Document: ${file.name}]\nGemini AI Vision engine will automatically extract text and analyze the document layout.`;
+                return;
+            }
+
+            document.getElementById('screener-resume').value = fullText.trim();
+            updateFileBadge(file.name, 'fa-file-pdf', `PDF Parsed (${pdf.numPages} Page${pdf.numPages > 1 ? 's' : ''})`);
+            showToast(`Successfully extracted text from PDF resume!`, 'success');
+        }
+
+        async function parseDocxFile(file) {
+            if (window.mammoth) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await window.mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                document.getElementById('screener-resume').value = result.value.trim();
+                updateFileBadge(file.name, 'fa-file-word', 'Word Document Parsed');
+                showToast(`Successfully extracted text from Word document!`, 'success');
+            } else {
+                await parseTextFile(file);
+            }
+        }
+
+        async function parseImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const base64Data = dataUrl.split(',')[1];
+                uploadedResumeImage = {
+                    mimeType: file.type || 'image/png',
+                    data: base64Data
+                };
+                
+                document.getElementById('screener-resume').value = `[Image Resume: ${file.name}]\nGemini Multimodal Vision will directly read and evaluate the resume layout from the uploaded image.`;
+                updateFileBadge(file.name, 'fa-file-image', 'Image Resume (AI Multimodal Ready)');
+                showToast(`Loaded image resume. Gemini Vision engine will analyze image directly!`, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function parseTextFile(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('screener-resume').value = e.target.result;
-                showToast(`Loaded resume file: ${file.name}`, 'success');
-            };
-            reader.onerror = function() {
-                showToast("Could not read uploaded file.", "error");
+                updateFileBadge(file.name, 'fa-file-lines', 'Text File Loaded');
+                showToast(`Loaded resume text: ${file.name}`, 'success');
             };
             reader.readAsText(file);
         }
 
+        function updateFileBadge(filename, iconClass, statusMsg) {
+            const badge = document.getElementById('file-info-badge');
+            const icon = document.getElementById('file-type-icon');
+            const nameEl = document.getElementById('file-name-display');
+            const statusEl = document.getElementById('file-status-display');
+
+            if (badge) badge.classList.remove('hidden');
+            if (icon) icon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            if (nameEl) nameEl.textContent = filename;
+            if (statusEl) statusEl.textContent = statusMsg;
+
+            const nameInput = document.getElementById('screener-name');
+            if (nameInput && !nameInput.value.trim()) {
+                const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ").replace(/\b(resume|cv|bio)\b/gi, "").trim();
+                if (cleanName) {
+                    nameInput.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+                }
+            }
+        }
+
+        function clearUploadedFile() {
+            uploadedResumeImage = null;
+            document.getElementById('screener-resume').value = '';
+            document.getElementById('file-input').value = '';
+            document.getElementById('file-info-badge').classList.add('hidden');
+            showToast("Cleared uploaded file.", "info");
+        }
+
         function loadSampleResume() {
+            clearUploadedFile();
             document.getElementById('screener-name').value = 'Taylor Morgan';
             document.getElementById('screener-resume').value = `Taylor Morgan | Senior Software Engineer\nSummary: 6 years building modern web applications using React, TypeScript, and Node.js. Led frontend architecture for SaaS fintech platforms handling 2M+ daily active users.\nExperience:\n- Lead Frontend Engineer at TechCorp (2021-Present): Migrated legacy codebase to React 18 & Vite, reducing bundle size by 40%.\n- Full Stack Developer at CloudScale (2018-2021): Built RESTful APIs and microservices using Node.js, Express, and PostgreSQL on AWS.\nEducation: B.S. in Computer Science, Stanford University.`;
             showToast("Sample resume loaded into text analyzer.", "info");
@@ -1193,7 +1321,6 @@
             try {
                 if (!auth.currentUser) await signInAnonymously(auth);
                 if (auth.currentUser) {
-                    // Strict MANDATORY RULE 1 - Save to User's Private Collection
                     const jobsCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'jobs');
                     const docRef = await addDoc(jobsCol, newJob);
                     const idx = jobs.findIndex(j => j.id === tempId);
@@ -1265,8 +1392,8 @@
             const jobRole = document.getElementById('screener-job-select').value;
             const resumeText = document.getElementById('screener-resume').value.trim();
 
-            if (!name || !resumeText) {
-                showToast('Please provide candidate name and resume text.', 'warning');
+            if (!name || (!resumeText && !uploadedResumeImage)) {
+                showToast('Please provide candidate name and upload a resume or paste content.', 'warning');
                 return;
             }
 
@@ -1274,14 +1401,26 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Analyzing Resume...</span>`;
             btn.disabled = true;
 
-            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume against the targeted job position. Produce a structured JSON evaluation with match scores.";
-            const userQuery = `Target Job: ${jobRole}\nCandidate: ${name}\nResume:\n${resumeText}\n\nRespond ONLY with JSON containing: "score" (number 0-100), "strengths" (array of strings), "weaknesses" (array of strings), "recommendation" (string: "Strong Hire", "Hire", or "Further Review"), "summary" (concise paragraph), "technicalScore" (0-100), "experienceScore" (0-100), "communicationScore" (0-100), "cultureScore" (0-100).`;
+            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume (text or image document) against the targeted job position. Produce a structured JSON evaluation with match scores.";
+            const userQuery = `Target Job: ${jobRole}\nCandidate: ${name}\nResume Text / Document:\n${resumeText}\n\nRespond ONLY with JSON containing: "score" (number 0-100), "strengths" (array of strings), "weaknesses" (array of strings), "recommendation" (string: "Strong Hire", "Hire", or "Further Review"), "summary" (concise paragraph), "technicalScore" (0-100), "experienceScore" (0-100), "communicationScore" (0-100), "cultureScore" (0-100).`;
 
             try {
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                
+                const parts = [];
+                if (uploadedResumeImage) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: uploadedResumeImage.mimeType,
+                            data: uploadedResumeImage.data
+                        }
+                    });
+                }
+                parts.push({ text: userQuery });
+
                 const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
+                    contents: [{ parts: parts }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: { responseMimeType: "application/json" }
                 };
@@ -1335,7 +1474,6 @@
 
             try {
                 if (!auth.currentUser) await signInAnonymously(auth);
-                // Save to private user collection
                 const candidatesCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates');
                 await addDoc(candidatesCol, lastScreenedCandidate);
 
@@ -1615,7 +1753,7 @@ Provide subject line and clear email body.`;
                     <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
                     <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
                         <p>${initialQuestion}</p>
-                        <button onclick="speakTextMessage('${initialQuestion.replace(/'/g, "\\'")}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
+                        <button onclick="window.speakTextMessage('${initialQuestion.replace(/'/g, "\\'")}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
                             <i class="fa-solid fa-volume-high"></i>
                             <span>Listen Question (AI TTS)</span>
                         </button>
@@ -1666,7 +1804,7 @@ Provide subject line and clear email body.`;
                         <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
                         <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
                             <p>${aiReply}</p>
-                            <button onclick="speakTextMessage('${sanitizedReply}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
+                            <button onclick="window.speakTextMessage('${sanitizedReply}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
                                 <i class="fa-solid fa-volume-high"></i>
                                 <span>Listen Answer (AI TTS)</span>
                             </button>
@@ -1680,12 +1818,12 @@ Provide subject line and clear email body.`;
             }
         }
 
-        // Expose global methods to window object
         window.toggleMobileSidebar = toggleMobileSidebar;
         window.switchTab = switchTab;
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.handleFileUpload = handleFileUpload;
+        window.clearUploadedFile = clearUploadedFile;
         window.loadSampleResume = loadSampleResume;
         window.handleCreateJob = handleCreateJob;
         window.deleteJob = deleteJob;
@@ -1701,14 +1839,47 @@ Provide subject line and clear email body.`;
         window.copyOutreachEmail = copyOutreachEmail;
         window.startAiInterview = startAiInterview;
         window.sendChatMessage = sendChatMessage;
-        window.filterCandidatesByJob = filterCandidatesByJob;
         window.renderCandidates = renderCandidates;
-        window.showToast = showToast;
+        window.renderJobs = renderJobs;
+        window.renderDashboard = renderDashboard;
         window.handleGoogleSignIn = handleGoogleSignIn;
         window.switchAuthTab = switchAuthTab;
         window.handleEmailAuth = handleEmailAuth;
         window.handleSignOut = handleSignOut;
         window.handleGuestSignIn = handleGuestSignIn;
+        window.filterCandidatesByJob = filterCandidatesByJob;
+
+        window.onload = function() {
+            initBackend();
+
+            // Setup Drag and Drop listeners for uploads
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+                    }, false);
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files && files.length > 0) {
+                        processResumeFile(files[0]);
+                    }
+                });
+            }
+        };
     </script>
 </body>
 </html>
