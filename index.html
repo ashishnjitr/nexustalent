@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusTalent AI | Autonomous Recruitment Hub</title>
+    <title>NexusTalent AI | Autonomous Recruitment & Jobscan ATS Hub</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,7 +72,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-white tracking-wide text-base">NexusTalent AI</h1>
-                        <p class="text-[11px] text-slate-400">Autonomous Talent Hub</p>
+                        <p class="text-[11px] text-slate-400">ATS Jobscan & Recruitment</p>
                     </div>
                 </div>
                 <button onclick="window.toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white p-1">
@@ -84,6 +84,11 @@
                 <button onclick="window.switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
                     <i class="fa-solid fa-chart-pie w-5"></i>
                     <span>Dashboard</span>
+                </button>
+                <button onclick="window.switchTab('jobscan')" id="nav-jobscan" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white relative">
+                    <i class="fa-solid fa-sliders w-5"></i>
+                    <span>Jobscan ATS Matcher</span>
+                    <span class="ml-auto bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">NEW</span>
                 </button>
                 <button onclick="window.switchTab('jobs')" id="nav-jobs" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
                     <i class="fa-solid fa-briefcase w-5"></i>
@@ -129,7 +134,6 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 w-full">
             
             <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between shrink-0">
@@ -245,11 +249,202 @@
                                     <!-- Dynamic logs -->
                                 </div>
                             </div>
-                            <div class="pt-4 border-t border-slate-100">
-                                <button onclick="window.switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
-                                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Launch Resume Analyzer
+                            <div class="pt-4 border-t border-slate-100 flex gap-2">
+                                <button onclick="window.switchTab('jobscan')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
+                                    <i class="fa-solid fa-sliders mr-1.5"></i> Jobscan Matcher
+                                </button>
+                                <button onclick="window.switchTab('screener')" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Resume Parser
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-jobscan" class="space-y-6 hidden">
+                    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-indigo-600"></i>
+                                    <span>ATS Resume & Job Description Matcher (Jobscan Suite)</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-1">Compare any resume against a targeted job description to detect missing hard/soft skills, keyword frequency, and ATS compatibility.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="window.loadJobscanSample()" class="px-3.5 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-xs font-semibold border border-indigo-200 transition-all">
+                                    <i class="fa-solid fa-vial mr-1.5"></i> Load Sample Benchmark
+                                </button>
+                                <button onclick="window.runJobscanMatch()" id="btn-run-jobscan" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 flex items-center space-x-2 transition-all">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span>Calculate ATS Match</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dual-Pane Input Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Left Pane: Job Description -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-briefcase text-indigo-600"></i>
+                                        <span>Target Job Description</span>
+                                    </label>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-slate-400">Select Requisition:</span>
+                                        <select id="jobscan-requisition-select" onchange="window.loadRequisitionIntoJobscan(this.value)" class="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">Custom Input</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <textarea id="jobscan-jd-text" rows="12" placeholder="Paste target Job Description here (including responsibilities, qualifications, and required tools)..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                            </div>
+
+                            <!-- Right Pane: Resume Input -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-file-lines text-indigo-600"></i>
+                                        <span>Candidate Resume Content</span>
+                                    </label>
+                                    <button onclick="document.getElementById('jobscan-file-input').click()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                                        <i class="fa-solid fa-upload"></i>
+                                        <span>Upload Document</span>
+                                    </button>
+                                    <input type="file" id="jobscan-file-input" onchange="window.handleJobscanFileUpload(event)" accept=".pdf,.docx,.doc,.txt,.md,.rtf,.png,.jpg,.jpeg,.webp" class="hidden">
+                                </div>
+                                <textarea id="jobscan-resume-text" rows="12" placeholder="Paste Candidate Resume text here or click 'Upload Document' to extract content from PDF, Word, or Image..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jobscan Match Analysis Dashboard -->
+                    <div id="jobscan-report-container" class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm hidden space-y-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-5 gap-4">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-column text-indigo-600"></i>
+                                    <span>ATS Optimization Analysis</span>
+                                </h4>
+                                <p class="text-xs text-slate-400">Detailed keyword match, missing skills gap, and formatting audit.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center space-x-3 bg-indigo-50 px-5 py-2.5 rounded-2xl border border-indigo-100">
+                                    <div class="text-right">
+                                        <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Overall Jobscan Score</p>
+                                        <p id="jobscan-score-val" class="text-2xl font-black text-indigo-600 leading-none">0%</p>
+                                    </div>
+                                    <div id="jobscan-score-badge" class="px-3 py-1 bg-indigo-600 text-white font-bold text-xs rounded-lg">Calculating</div>
+                                </div>
+                                <button onclick="window.optimizeResumeWithAi()" id="btn-optimize-resume" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>AI Auto-Tailor Resume</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3-Column Match Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">Hard Skills Match</span>
+                                    <span id="jobscan-hard-skill-ratio" class="text-xs font-bold text-indigo-600">0/0</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="jobscan-hard-skill-bar" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">Soft Skills Match</span>
+                                    <span id="jobscan-soft-skill-ratio" class="text-xs font-bold text-blue-600">0/0</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="jobscan-soft-skill-bar" class="bg-blue-600 h-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-slate-600 uppercase">ATS Compatibility</span>
+                                    <span id="jobscan-ats-audit-ratio" class="text-xs font-bold text-emerald-600">0 Pass</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="jobscan-ats-audit-bar" class="bg-emerald-600 h-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skill Gap Cards & Formatting Checks -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Hard & Soft Skills Breakdown -->
+                            <div class="space-y-4">
+                                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                                    <h5 class="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center justify-between">
+                                        <span>Matched Hard Skills</span>
+                                        <span class="text-[10px] text-emerald-600 font-semibold" id="hard-matched-count">0 found</span>
+                                    </h5>
+                                    <div id="jobscan-hard-matched" class="flex flex-wrap gap-1.5 min-h-[30px]"></div>
+                                </div>
+
+                                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                                    <h5 class="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center justify-between">
+                                        <span class="text-red-600">Missing Hard Skills (Click to inject)</span>
+                                        <span class="text-[10px] text-red-500 font-semibold" id="hard-missing-count">0 missing</span>
+                                    </h5>
+                                    <div id="jobscan-hard-missing" class="flex flex-wrap gap-1.5 min-h-[30px]"></div>
+                                </div>
+
+                                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                                    <h5 class="text-xs font-bold text-slate-700 uppercase mb-2">Soft Skills & Competencies</h5>
+                                    <div id="jobscan-soft-skills" class="flex flex-wrap gap-1.5 min-h-[30px]"></div>
+                                </div>
+                            </div>
+
+                            <!-- ATS Formatting & Keyword Frequency Table -->
+                            <div class="space-y-4">
+                                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                                    <h5 class="text-xs font-bold text-slate-700 uppercase mb-3 flex items-center justify-between">
+                                        <span>ATS Parsing & Formatting Checklist</span>
+                                        <i class="fa-solid fa-list-check text-slate-400"></i>
+                                    </h5>
+                                    <div id="jobscan-ats-checklist" class="space-y-2 text-xs"></div>
+                                </div>
+
+                                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                                    <h5 class="text-xs font-bold text-slate-700 uppercase mb-3">Top Keyword Recurrence Matrix</h5>
+                                    <div class="max-h-56 overflow-y-auto">
+                                        <table class="w-full text-left text-xs">
+                                            <thead>
+                                                <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase">
+                                                    <th class="py-2">Keyword</th>
+                                                    <th class="py-2 text-center">JD Count</th>
+                                                    <th class="py-2 text-center">Resume Count</th>
+                                                    <th class="py-2 text-right">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="jobscan-keyword-table" class="divide-y divide-slate-100"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tailored Resume Modal / AI Result Box -->
+                        <div id="jobscan-optimized-output" class="hidden border border-emerald-200 bg-emerald-50/40 p-5 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-600"></i>
+                                    <span>AI Optimized & Tailored Resume Draft</span>
+                                </h5>
+                                <button onclick="window.copyOptimizedResume()" class="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1">
+                                    <i class="fa-solid fa-copy text-indigo-600"></i>
+                                    <span>Copy Resume</span>
+                                </button>
+                            </div>
+                            <textarea id="jobscan-optimized-text" rows="8" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
                         </div>
                     </div>
                 </div>
@@ -686,55 +881,6 @@
         </div>
     </div>
 
-    <div id="outreach-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                        <i class="fa-solid fa-envelope-open-text"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base">AI Candidate Outreach Writer</h3>
-                        <p class="text-xs text-slate-400" id="outreach-cand-title">Personalized communication generator</p>
-                    </div>
-                </div>
-                <button onclick="window.closeModal('outreach-modal')" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Purpose / Tone</label>
-                    <select id="outreach-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="invite">Interview Invitation (Friendly & Professional)</option>
-                        <option value="offer">Job Offer Draft (Enthusiastic)</option>
-                        <option value="rejection">Constructive Feedback / Rejection (Encouraging & Respectful)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-semibold text-slate-600 uppercase">Generated Email Content</label>
-                        <button onclick="window.copyOutreachEmail()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
-                            <i class="fa-solid fa-copy"></i>
-                            <span>Copy Content</span>
-                        </button>
-                    </div>
-                    <textarea id="outreach-content" rows="8" placeholder="Click 'Generate Email' to build a personalized email powered by Gemini..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-3 pt-2">
-                <button onclick="window.closeModal('outreach-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Close</button>
-                <button onclick="window.generateOutreachEmail()" id="btn-gen-outreach" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Generate Email</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
@@ -782,9 +928,9 @@
         let unsubscribeCandidates = null;
 
         const initialJobs = [
-            { title: 'Senior Full Stack Engineer', dept: 'Engineering', skills: 'React, TypeScript, Node.js, AWS', desc: 'Looking for an experienced full stack engineer to build scalable cloud applications.' },
-            { title: 'AI Research Scientist', dept: 'AI Lab', skills: 'Python, PyTorch, LLMs, Transformers', desc: 'Lead research in generative models and agentic workflows.' },
-            { title: 'Product Designer (UI/UX)', dept: 'Design', skills: 'Figma, Tailwind, User Research, Prototyping', desc: 'Craft intuitive interfaces for enterprise SaaS platforms.' }
+            { title: 'Senior Full Stack Engineer', dept: 'Engineering', skills: 'React, TypeScript, Node.js, AWS, PostgreSQL, Docker', desc: 'Looking for an experienced full stack engineer to build scalable cloud applications, design microservices, and lead technical architecture.' },
+            { title: 'AI Research Scientist', dept: 'AI Lab', skills: 'Python, PyTorch, LLMs, Transformers, CUDA, Fine-Tuning', desc: 'Lead research in generative models, agentic workflows, multi-modal LLM evaluation, and neural search optimization.' },
+            { title: 'Product Designer (UI/UX)', dept: 'Design', skills: 'Figma, Tailwind, User Research, Prototyping, Design Systems', desc: 'Craft intuitive interfaces for enterprise SaaS platforms and conduct interactive usability testing.' }
         ];
 
         const initialCandidates = [
@@ -912,121 +1058,10 @@
             }, (err) => console.error("Private candidates sync error:", err));
         }
 
-        async function handleGoogleSignIn() {
-            try {
-                const provider = new GoogleAuthProvider();
-                provider.addScope('email');
-                provider.addScope('profile');
-                const result = await signInWithPopup(auth, provider);
-                showToast(`Welcome back, ${result.user.displayName || 'Recruiter'}!`, "success");
-                closeModal('auth-modal');
-            } catch (err) {
-                console.warn("Google Auth popup note:", err);
-                showToast("Connecting via Google Account Sandbox...", "info");
-                try {
-                    let user = auth.currentUser;
-                    if (!user) {
-                        const userCred = await signInAnonymously(auth);
-                        user = userCred.user;
-                    }
-                    await updateProfile(user, {
-                        displayName: "Alex Rivera (Google)",
-                    });
-                    currentUser = user;
-                    updateUserUI(user);
-                    setupUserRealtimeSync(user);
-                    showToast("Signed in successfully with Google account!", "success");
-                    closeModal('auth-modal');
-                } catch (fallbackErr) {
-                    console.error("Google login error:", fallbackErr);
-                    showToast("Google Sign-In failed. Please try Email or Guest sign in.", "error");
-                }
-            }
-        }
-
-        function switchAuthTab(tab) {
-            currentAuthTab = tab;
-            const loginBtn = document.getElementById('auth-tab-login');
-            const signupBtn = document.getElementById('auth-tab-signup');
-            const nameField = document.getElementById('auth-name-field');
-            const submitBtn = document.getElementById('btn-submit-auth');
-            const modalTitle = document.getElementById('auth-modal-title');
-
-            if (tab === 'login') {
-                loginBtn.className = "flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all";
-                signupBtn.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all";
-                nameField.classList.add('hidden');
-                submitBtn.textContent = "Log In to Account";
-                modalTitle.textContent = "Sign In to NexusTalent";
-            } else {
-                signupBtn.className = "flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all";
-                loginBtn.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all";
-                nameField.classList.remove('hidden');
-                submitBtn.textContent = "Create Recruiter Account";
-                modalTitle.textContent = "Create Your Account";
-            }
-        }
-
-        async function handleEmailAuth(event) {
-            event.preventDefault();
-            const email = document.getElementById('auth-email-input').value.trim();
-            const password = document.getElementById('auth-password-input').value.trim();
-            const name = document.getElementById('auth-name-input').value.trim();
-
-            if (!email || !password) {
-                showToast("Please enter email and password.", "warning");
-                return;
-            }
-
-            try {
-                if (currentAuthTab === 'signup') {
-                    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                    if (name && userCred.user) {
-                        await updateProfile(userCred.user, { displayName: name });
-                    }
-                    showToast("Account created successfully!", "success");
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    showToast("Signed in successfully!", "success");
-                }
-                closeModal('auth-modal');
-            } catch (err) {
-                console.error("Email auth error:", err);
-                showToast(err.message || "Authentication failed. Check credentials.", "error");
-            }
-        }
-
-        async function handleSignOut() {
-            try {
-                await signOut(auth);
-                showToast("Signed out. Switched to Guest sandbox.", "info");
-                closeModal('auth-modal');
-            } catch (err) {
-                console.error(err);
-                showToast("Failed to sign out.", "error");
-            }
-        }
-
-        async function handleGuestSignIn() {
-            try {
-                await signInAnonymously(auth);
-                showToast("Switched to isolated Guest workspace.", "info");
-                closeModal('auth-modal');
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        }
-
         function switchTab(tabId) {
-            ['dashboard', 'jobs', 'candidates', 'screener', 'interviewer'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
+            ['dashboard', 'jobscan', 'jobs', 'candidates', 'screener', 'interviewer'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`nav-${t}`);
                 if (btn) {
                     btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
@@ -1034,7 +1069,8 @@
                 }
             });
 
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
             const activeBtn = document.getElementById(`nav-${tabId}`);
             if (activeBtn) {
                 activeBtn.classList.remove('hover:bg-slate-800', 'text-slate-400', 'hover:text-white');
@@ -1043,17 +1079,300 @@
 
             const titles = {
                 dashboard: 'Dashboard Overview',
+                jobscan: 'Jobscan ATS Resume & Job Description Matcher',
                 jobs: 'Job Requisitions Manager',
                 candidates: 'Candidate Pipeline',
                 screener: 'AI Resume Analyzer & Matcher',
                 interviewer: 'AI Voice & Text Screening Chat'
             };
-            document.getElementById('page-title').textContent = titles[tabId];
+            document.getElementById('page-title').textContent = titles[tabId] || 'NexusTalent AI';
 
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
                 toggleMobileSidebar();
             }
+        }
+
+        function populateDropdowns() {
+            const jobSelects = [
+                document.getElementById('screener-job-select'), 
+                document.getElementById('filter-job'),
+                document.getElementById('jobscan-requisition-select')
+            ];
+            const activeJobs = (jobs && jobs.length > 0) ? jobs : initialJobs;
+            jobSelects.forEach((select, idx) => {
+                if (!select) return;
+                const currentVal = select.value;
+                let html = idx === 1 ? '<option value="all">All Roles</option>' : (idx === 2 ? '<option value="">Custom Input</option>' : '');
+                html += activeJobs.map(j => `<option value="${j.title}">${j.title} (${j.dept})</option>`).join('');
+                select.innerHTML = html;
+                if (currentVal && select.querySelector(`option[value="${CSS.escape(currentVal)}"]`)) {
+                    select.value = currentVal;
+                }
+            });
+
+            const intSelect = document.getElementById('interview-candidate-select');
+            if (intSelect) {
+                const activeCandidates = (candidates && candidates.length > 0) ? candidates : initialCandidates;
+                intSelect.innerHTML = '<option value="">Select Candidate to Screen</option>' + activeCandidates.map(c => `<option value="${c.name}">${c.name} - ${c.role}</option>`).join('');
+            }
+        }
+
+        function loadJobscanSample() {
+            const activeJobs = (jobs && jobs.length > 0) ? jobs : initialJobs;
+            const targetJob = activeJobs[0];
+            
+            document.getElementById('jobscan-jd-text').value = `Position Title: ${targetJob.title}\nDepartment: ${targetJob.dept}\n\nSummary:\n${targetJob.desc}\n\nKey Requirements & Skills:\n- Minimum 5+ years experience building complex cloud web applications.\n- Strong mastery of ${targetJob.skills}.\n- Experience with CI/CD deployment pipelines, AWS microservices, and database optimization.\n- Excellent communication skills, agile teamwork, leadership, and problem solving under tight deadlines.`;
+
+            document.getElementById('jobscan-resume-text').value = `Taylor Morgan\nSenior Full Stack Developer\nEmail: taylor@example.com | Phone: (555) 019-2831\n\nProfessional Summary:\nDedicated software engineer with 6 years of hands-on experience designing web products using React, JavaScript, and Node.js. Successfully led teams in launching scalable web apps.\n\nTechnical Skills:\n- React, Node.js, JavaScript, HTML, CSS, Git, AWS, REST APIs\n\nWork Experience:\n- Lead Frontend Developer at TechCorp (2021-Present): Built micro-frontends with React, improving page speed performance by 35%.\n- Full Stack Engineer at CloudScale (2018-2021): Developed REST APIs using Node.js and AWS EC2.\n\nEducation:\nB.S. in Computer Science, Stanford University.`;
+
+            showToast("Loaded benchmark sample data into Jobscan matcher!", "info");
+        }
+
+        function loadRequisitionIntoJobscan(roleTitle) {
+            if (!roleTitle) return;
+            const activeJobs = (jobs && jobs.length > 0) ? jobs : initialJobs;
+            const job = activeJobs.find(j => j.title === roleTitle);
+            if (job) {
+                document.getElementById('jobscan-jd-text').value = `Job Title: ${job.title}\nDepartment: ${job.dept}\n\nDescription:\n${job.desc}\n\nRequired Skills:\n${job.skills}`;
+                showToast(`Loaded requisition "${job.title}" into Jobscan target pane.`, "info");
+            }
+        }
+
+        async function handleJobscanFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast(`Reading resume file: ${file.name}...`, "info");
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+            try {
+                if (ext === '.pdf') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let fullText = '';
+                    for (let p = 1; p <= pdf.numPages; p++) {
+                        const page = await pdf.getPage(p);
+                        const content = await page.getTextContent();
+                        fullText += content.items.map(i => i.str).join(' ') + '\n';
+                    }
+                    document.getElementById('jobscan-resume-text').value = fullText.trim();
+                } else if (ext === '.docx' || ext === '.doc') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await window.mammoth.extractRawText({ arrayBuffer });
+                    document.getElementById('jobscan-resume-text').value = result.value.trim();
+                } else {
+                    const text = await file.text();
+                    document.getElementById('jobscan-resume-text').value = text;
+                }
+                showToast("Resume loaded into Jobscan scanner!", "success");
+            } catch (e) {
+                console.error("Jobscan upload error:", e);
+                showToast("Error extracting text from file. Please paste content directly.", "error");
+            }
+        }
+
+        function runJobscanMatch() {
+            const jdText = document.getElementById('jobscan-jd-text').value.trim();
+            const resumeText = document.getElementById('jobscan-resume-text').value.trim();
+
+            if (!jdText || !resumeText) {
+                showToast("Please provide both a Job Description and Candidate Resume to run Jobscan analysis.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('btn-run-jobscan');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Analyzing Match...</span>`;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Extract keywords and run comparative algorithm
+                const jdClean = jdText.toLowerCase();
+                const resumeClean = resumeText.toLowerCase();
+
+                // Skill definitions bank
+                const potentialHardSkills = ['react', 'typescript', 'javascript', 'node.js', 'node', 'aws', 'python', 'pytorch', 'transformers', 'docker', 'postgresql', 'graphql', 'figma', 'tailwind', 'microservices', 'ci/cd', 'rest apis', 'cuda', 'git', 'sql', 'express', 'vite'];
+                const potentialSoftSkills = ['communication', 'leadership', 'teamwork', 'agile', 'problem solving', 'collaboration', 'adaptability', 'management', 'time management'];
+
+                const jdHard = potentialHardSkills.filter(s => jdClean.includes(s));
+                const jdSoft = potentialSoftSkills.filter(s => jdClean.includes(s));
+
+                const matchedHard = jdHard.filter(s => resumeClean.includes(s));
+                const missingHard = jdHard.filter(s => !resumeClean.includes(s));
+
+                const matchedSoft = jdSoft.filter(s => resumeClean.includes(s));
+                const missingSoft = jdSoft.filter(s => !resumeClean.includes(s));
+
+                // ATS Checklist
+                const hasMetrics = /\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent)\b/gi.test(resumeText);
+                const hasContact = /@|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/gi.test(resumeText);
+                const wordCount = resumeText.split(/\s+/).length;
+                const goodLength = wordCount >= 200 && wordCount <= 1000;
+                const hasSections = /experience|education|skills|summary/gi.test(resumeText);
+
+                // Calculate weighted match score
+                const hardScore = jdHard.length > 0 ? (matchedHard.length / jdHard.length) * 60 : 45;
+                const softScore = jdSoft.length > 0 ? (matchedSoft.length / jdSoft.length) * 25 : 20;
+                const atsAuditScore = ((hasMetrics ? 1 : 0) + (hasContact ? 1 : 0) + (goodLength ? 1 : 0) + (hasSections ? 1 : 0)) * 3.75;
+
+                const overallScore = Math.min(98, Math.round(hardScore + softScore + atsAuditScore));
+
+                // Render UI Report
+                document.getElementById('jobscan-score-val').textContent = `${overallScore}%`;
+                const badge = document.getElementById('jobscan-score-badge');
+                if (overallScore >= 85) {
+                    badge.textContent = "High Match";
+                    badge.className = "px-3 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg";
+                } else if (overallScore >= 70) {
+                    badge.textContent = "Good Match";
+                    badge.className = "px-3 py-1 bg-blue-600 text-white font-bold text-xs rounded-lg";
+                } else {
+                    badge.textContent = "Needs Tailoring";
+                    badge.className = "px-3 py-1 bg-amber-500 text-white font-bold text-xs rounded-lg";
+                }
+
+                document.getElementById('jobscan-hard-skill-ratio').textContent = `${matchedHard.length}/${jdHard.length}`;
+                document.getElementById('jobscan-hard-skill-bar').style.width = `${jdHard.length > 0 ? Math.round((matchedHard.length / jdHard.length) * 100) : 100}%`;
+
+                document.getElementById('jobscan-soft-skill-ratio').textContent = `${matchedSoft.length}/${jdSoft.length}`;
+                document.getElementById('jobscan-soft-skill-bar').style.width = `${jdSoft.length > 0 ? Math.round((matchedSoft.length / jdSoft.length) * 100) : 100}%`;
+
+                const passedChecks = (hasMetrics ? 1 : 0) + (hasContact ? 1 : 0) + (goodLength ? 1 : 0) + (hasSections ? 1 : 0);
+                document.getElementById('jobscan-ats-audit-ratio').textContent = `${passedChecks}/4 Pass`;
+                document.getElementById('jobscan-ats-audit-bar').style.width = `${(passedChecks / 4) * 100}%`;
+
+                // Render skill pills
+                document.getElementById('hard-matched-count').textContent = `${matchedHard.length} found`;
+                document.getElementById('jobscan-hard-matched').innerHTML = matchedHard.length > 0 
+                    ? matchedHard.map(s => `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold"><i class="fa-solid fa-check text-[10px] mr-1"></i>${s}</span>`).join('')
+                    : `<span class="text-xs text-slate-400 italic">No hard skills matched yet</span>`;
+
+                document.getElementById('hard-missing-count').textContent = `${missingHard.length} missing`;
+                document.getElementById('jobscan-hard-missing').innerHTML = missingHard.length > 0 
+                    ? missingHard.map(s => `<button onclick="window.injectMissingKeyword('${s}')" title="Click to insert into resume" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all"><i class="fa-solid fa-plus text-[10px]"></i>${s}</button>`).join('')
+                    : `<span class="text-xs text-emerald-600 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i>All key hard skills present!</span>`;
+
+                document.getElementById('jobscan-soft-skills').innerHTML = matchedSoft.map(s => `<span class="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold"><i class="fa-solid fa-check text-[10px] mr-1"></i>${s}</span>`).concat(
+                    missingSoft.map(s => `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-medium"><i class="fa-solid fa-minus text-[10px] mr-1"></i>${s} (Missing)</span>`)
+                ).join('');
+
+                // Render ATS Audit Checklist
+                document.getElementById('jobscan-ats-checklist').innerHTML = `
+                    <div class="flex items-center justify-between p-2 rounded-lg ${hasMetrics ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}">
+                        <span><i class="fa-solid ${hasMetrics ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-amber-500'} mr-2"></i>Measurable Quantitative Results (${hasMetrics ? 'Present' : 'Missing metrics/percentages'})</span>
+                        <span class="font-bold">${hasMetrics ? 'PASS' : 'WARN'}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg ${hasContact ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}">
+                        <span><i class="fa-solid ${hasContact ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-amber-500'} mr-2"></i>Contact Info / Email Detected</span>
+                        <span class="font-bold">${hasContact ? 'PASS' : 'WARN'}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg ${goodLength ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}">
+                        <span><i class="fa-solid ${goodLength ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-amber-500'} mr-2"></i>Resume Length (${wordCount} words)</span>
+                        <span class="font-bold">${goodLength ? 'IDEAL' : 'ADJUST'}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg ${hasSections ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}">
+                        <span><i class="fa-solid ${hasSections ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-amber-500'} mr-2"></i>Standard ATS Section Headings</span>
+                        <span class="font-bold">${hasSections ? 'PASS' : 'WARN'}</span>
+                    </div>
+                `;
+
+                // Render Keyword Frequency Table
+                const allKeywords = Array.from(new Set([...jdHard, ...jdSoft]));
+                const tableRows = allKeywords.map(kw => {
+                    const regex = new RegExp(kw, 'gi');
+                    const jdCount = (jdText.match(regex) || []).length;
+                    const resCount = (resumeText.match(regex) || []).length;
+                    const statusClass = resCount >= jdCount ? 'text-emerald-600 font-bold' : (resCount > 0 ? 'text-blue-600 font-medium' : 'text-red-500 font-bold');
+                    const statusText = resCount >= jdCount ? 'Optimal' : (resCount > 0 ? 'Low Count' : 'Missing');
+
+                    return `
+                        <tr>
+                            <td class="py-2 font-medium text-slate-800 capitalize">${kw}</td>
+                            <td class="py-2 text-center text-slate-500 font-mono">${jdCount}</td>
+                            <td class="py-2 text-center text-slate-700 font-mono font-bold">${resCount}</td>
+                            <td class="py-2 text-right ${statusClass}">${statusText}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('jobscan-keyword-table').innerHTML = tableRows || `<tr><td colspan="4" class="py-3 text-center text-slate-400">No core technical keywords extracted.</td></tr>`;
+
+                // Reveal report
+                const report = document.getElementById('jobscan-report-container');
+                report.classList.remove('hidden');
+                report.scrollIntoView({ behavior: 'smooth' });
+
+                btn.innerHTML = `<i class="fa-solid fa-bolt"></i><span>Calculate ATS Match</span>`;
+                btn.disabled = false;
+
+                showToast(`Jobscan ATS calculation complete! Match score: ${overallScore}%`, "success");
+            }, 600);
+        }
+
+        function injectMissingKeyword(kw) {
+            const resumeArea = document.getElementById('jobscan-resume-text');
+            if (resumeArea) {
+                resumeArea.value += `\n- Technical Expertise: Proficient in ${kw}.`;
+                showToast(`Injected "${kw}" into candidate resume draft! Click 'Calculate ATS Match' to re-score.`, "success");
+            }
+        }
+
+        async function optimizeResumeWithAi() {
+            const jdText = document.getElementById('jobscan-jd-text').value.trim();
+            const resumeText = document.getElementById('jobscan-resume-text').value.trim();
+
+            if (!jdText || !resumeText) {
+                showToast("Please provide both Job Description and Resume content first.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('btn-optimize-resume');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Tailoring Resume...</span>`;
+            btn.disabled = true;
+
+            const prompt = `You are an expert ATS Resume Optimization Specialist (like Jobscan). Rewrite and tailor the following Candidate Resume so that it perfectly matches the Target Job Description. Naturally integrate missing hard skills and key action verbs while retaining real factual experience.
+
+Target Job Description:
+${jdText}
+
+Current Resume Content:
+${resumeText}
+
+Return only the fully optimized resume text.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const optimizedText = data.candidates?.[0]?.content?.parts?.[0]?.text || resumeText;
+
+                document.getElementById('jobscan-optimized-text').value = optimizedText;
+                document.getElementById('jobscan-optimized-output').classList.remove('hidden');
+                document.getElementById('jobscan-optimized-output').scrollIntoView({ behavior: 'smooth' });
+
+                showToast("Generated ATS-optimized resume draft!", "success");
+            } catch (err) {
+                console.error("AI Optimize Error:", err);
+                showToast("Error optimizing resume with AI.", "error");
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Auto-Tailor Resume</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        function copyOptimizedResume() {
+            const text = document.getElementById('jobscan-optimized-text').value;
+            if (!text) return;
+            document.execCommand('copy');
+            showToast("Copied optimized resume to clipboard!", "success");
         }
 
         function openModal(modalId) {
@@ -1064,6 +1383,13 @@
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
             document.getElementById(modalId).classList.remove('flex');
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
         }
 
         function renderDashboard() {
@@ -1087,19 +1413,6 @@
                     </td>
                 </tr>
             `).join('');
-
-            const feed = document.getElementById('agent-activity-feed');
-            if (feed && feed.children.length === 0) {
-                feed.innerHTML = `
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
-                        <i class="fa-solid fa-user-shield text-indigo-500 mt-0.5"></i>
-                        <div>
-                            <p class="font-medium text-slate-700">Private Profile Active</p>
-                            <p class="text-slate-400">Data isolated under user sandbox context.</p>
-                        </div>
-                    </div>
-                `;
-            }
         }
 
         function renderJobs() {
@@ -1168,813 +1481,24 @@
             `).join('');
         }
 
-        function populateDropdowns() {
-            const jobSelects = [document.getElementById('screener-job-select'), document.getElementById('filter-job')];
-            const activeJobs = (jobs && jobs.length > 0) ? jobs : initialJobs;
-            jobSelects.forEach((select, idx) => {
-                if (!select) return;
-                const currentVal = select.value;
-                let html = idx === 1 ? '<option value="all">All Roles</option>' : '';
-                html += activeJobs.map(j => `<option value="${j.title}">${j.title} (${j.dept})</option>`).join('');
-                select.innerHTML = html;
-                if (currentVal && select.querySelector(`option[value="${CSS.escape(currentVal)}"]`)) {
-                    select.value = currentVal;
-                }
-            });
-
-            const intSelect = document.getElementById('interview-candidate-select');
-            if (intSelect) {
-                const activeCandidates = (candidates && candidates.length > 0) ? candidates : initialCandidates;
-                intSelect.innerHTML = '<option value="">Select Candidate to Screen</option>' + activeCandidates.map(c => `<option value="${c.name}">${c.name} - ${c.role}</option>`).join('');
-            }
-        }
-
-        function filterCandidatesByJob(roleTitle) {
-            switchTab('candidates');
-            document.getElementById('filter-job').value = roleTitle;
-            renderCandidates();
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                processResumeFile(file);
-            }
-        }
-
-        async function processResumeFile(file) {
-            const fileName = file.name;
-            const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-            
-            showToast(`Reading resume file: ${fileName}...`, 'info');
-            uploadedResumeImage = null;
-
-            try {
-                if (ext === '.pdf') {
-                    await parsePdfFile(file);
-                } else if (ext === '.docx' || ext === '.doc') {
-                    await parseDocxFile(file);
-                } else if (['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
-                    await parseImageFile(file);
-                } else {
-                    await parseTextFile(file);
-                }
-            } catch (err) {
-                console.error("Resume file parsing error:", err);
-                showToast(`Could not parse ${fileName}. You can paste raw text into the box below.`, "error");
-            }
-        }
-
-        async function parsePdfFile(file) {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            let fullText = '';
-            
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                const page = await pdf.getPage(pageNum);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                fullText += pageText + '\n\n';
-            }
-
-            if (!fullText.trim()) {
-                showToast("PDF contains scanned image pages. Converting to AI Vision OCR mode...", "info");
-                updateFileBadge(file.name, 'fa-file-pdf', 'Scanned PDF (AI Vision Enabled)');
-                document.getElementById('screener-resume').value = `[Scanned PDF Document: ${file.name}]\nGemini AI Vision engine will automatically extract text and analyze the document layout.`;
-                return;
-            }
-
-            document.getElementById('screener-resume').value = fullText.trim();
-            updateFileBadge(file.name, 'fa-file-pdf', `PDF Parsed (${pdf.numPages} Page${pdf.numPages > 1 ? 's' : ''})`);
-            showToast(`Successfully extracted text from PDF resume!`, 'success');
-        }
-
-        async function parseDocxFile(file) {
-            if (window.mammoth) {
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await window.mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-                document.getElementById('screener-resume').value = result.value.trim();
-                updateFileBadge(file.name, 'fa-file-word', 'Word Document Parsed');
-                showToast(`Successfully extracted text from Word document!`, 'success');
-            } else {
-                await parseTextFile(file);
-            }
-        }
-
-        async function parseImageFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const dataUrl = e.target.result;
-                const base64Data = dataUrl.split(',')[1];
-                uploadedResumeImage = {
-                    mimeType: file.type || 'image/png',
-                    data: base64Data
-                };
-                
-                document.getElementById('screener-resume').value = `[Image Resume: ${file.name}]\nGemini Multimodal Vision will directly read and evaluate the resume layout from the uploaded image.`;
-                updateFileBadge(file.name, 'fa-file-image', 'Image Resume (AI Multimodal Ready)');
-                showToast(`Loaded image resume. Gemini Vision engine will analyze image directly!`, 'success');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function parseTextFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('screener-resume').value = e.target.result;
-                updateFileBadge(file.name, 'fa-file-lines', 'Text File Loaded');
-                showToast(`Loaded resume text: ${file.name}`, 'success');
-            };
-            reader.readAsText(file);
-        }
-
-        function updateFileBadge(filename, iconClass, statusMsg) {
-            const badge = document.getElementById('file-info-badge');
-            const icon = document.getElementById('file-type-icon');
-            const nameEl = document.getElementById('file-name-display');
-            const statusEl = document.getElementById('file-status-display');
-
-            if (badge) badge.classList.remove('hidden');
-            if (icon) icon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
-            if (nameEl) nameEl.textContent = filename;
-            if (statusEl) statusEl.textContent = statusMsg;
-
-            const nameInput = document.getElementById('screener-name');
-            if (nameInput && !nameInput.value.trim()) {
-                const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ").replace(/\b(resume|cv|bio)\b/gi, "").trim();
-                if (cleanName) {
-                    nameInput.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-                }
-            }
-        }
-
-        function clearUploadedFile() {
-            uploadedResumeImage = null;
-            document.getElementById('screener-resume').value = '';
-            document.getElementById('file-input').value = '';
-            document.getElementById('file-info-badge').classList.add('hidden');
-            showToast("Cleared uploaded file.", "info");
-        }
-
-        function loadSampleResume() {
-            clearUploadedFile();
-            document.getElementById('screener-name').value = 'Taylor Morgan';
-            document.getElementById('screener-resume').value = `Taylor Morgan | Senior Software Engineer\nSummary: 6 years building modern web applications using React, TypeScript, and Node.js. Led frontend architecture for SaaS fintech platforms handling 2M+ daily active users.\nExperience:\n- Lead Frontend Engineer at TechCorp (2021-Present): Migrated legacy codebase to React 18 & Vite, reducing bundle size by 40%.\n- Full Stack Developer at CloudScale (2018-2021): Built RESTful APIs and microservices using Node.js, Express, and PostgreSQL on AWS.\nEducation: B.S. in Computer Science, Stanford University.`;
-            showToast("Sample resume loaded into text analyzer.", "info");
-        }
-
-        async function handleCreateJob(event) {
-            event.preventDefault();
-
-            const title = document.getElementById('job-title-input').value.trim();
-            const dept = document.getElementById('job-dept-input').value.trim();
-            const skills = document.getElementById('job-skills-input').value.trim();
-            const desc = document.getElementById('job-desc-input').value.trim();
-
-            if (!title || !dept) {
-                showToast("Please complete job title and department.", "warning");
-                return;
-            }
-
-            const newJob = { title, dept, skills, desc };
-            const tempId = 'job-' + Date.now();
-            jobs.push({ id: tempId, ...newJob });
-            renderJobs();
-            populateDropdowns();
-            renderDashboard();
-
-            closeModal('new-job-modal');
-            event.target.reset();
-            showToast(`Created position in your sandbox: ${title}`, 'success');
-
-            try {
-                if (!auth.currentUser) await signInAnonymously(auth);
-                if (auth.currentUser) {
-                    const jobsCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'jobs');
-                    const docRef = await addDoc(jobsCol, newJob);
-                    const idx = jobs.findIndex(j => j.id === tempId);
-                    if (idx !== -1) jobs[idx].id = docRef.id;
-                }
-            } catch (err) {
-                console.warn("Firestore user sync note:", err);
-            }
-        }
-
-        async function deleteJob(jobId) {
-            if (!jobId) return;
-            jobs = jobs.filter(j => j.id !== jobId);
-            renderJobs();
-            populateDropdowns();
-            renderDashboard();
-            showToast("Job requisition removed.", "info");
-
-            try {
-                if (auth.currentUser && !jobId.startsWith('job-')) {
-                    const jobDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'jobs', jobId);
-                    await deleteDoc(jobDoc);
-                }
-            } catch (err) {
-                console.warn("Error deleting job from cloud:", err);
-            }
-        }
-
-        async function deleteCandidate(candidateId) {
-            if (!candidateId) return;
-            candidates = candidates.filter(c => c.id !== candidateId);
-            renderCandidates();
-            populateDropdowns();
-            renderDashboard();
-            showToast("Candidate removed from pipeline.", "info");
-
-            try {
-                if (auth.currentUser && !candidateId.startsWith('cand-')) {
-                    const candDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates', candidateId);
-                    await deleteDoc(candDoc);
-                }
-            } catch (err) {
-                console.warn("Error deleting candidate from cloud:", err);
-            }
-        }
-
-        function viewCandidateDetails(c) {
-            currentSelectedCandidate = c;
-            document.getElementById('modal-cand-name').textContent = c.name;
-            document.getElementById('modal-cand-role').textContent = c.role;
-            document.getElementById('modal-cand-score').textContent = c.score + '%';
-            document.getElementById('modal-cand-rec').textContent = c.recommendation;
-            document.getElementById('modal-cand-strengths').innerHTML = (c.strengths || []).map(s => `<li>${s}</li>`).join('');
-            document.getElementById('modal-cand-weaknesses').innerHTML = (c.weaknesses || []).map(w => `<li>${w}</li>`).join('');
-            document.getElementById('modal-cand-summary').textContent = c.summary;
-
-            const avatarContainer = document.getElementById('modal-cand-avatar-container');
-            if (c.avatar) {
-                avatarContainer.innerHTML = `<img src="${c.avatar}" class="w-full h-full object-cover">`;
-            } else {
-                avatarContainer.innerHTML = `<i class="fa-solid fa-user text-xl" id="modal-cand-icon"></i>`;
-            }
-
-            openModal('candidate-modal');
-        }
-
-        async function runAiScreening() {
-            let name = document.getElementById('screener-name').value.trim();
-            const jobSelect = document.getElementById('screener-job-select');
-            let jobRole = jobSelect ? jobSelect.value : '';
-            
-            if (!jobRole) {
-                const activeJobs = (jobs && jobs.length > 0) ? jobs : initialJobs;
-                if (activeJobs.length > 0) jobRole = activeJobs[0].title;
-            }
-
-            const resumeText = document.getElementById('screener-resume').value.trim();
-
-            if (!resumeText && !uploadedResumeImage) {
-                showToast('Please upload a resume file or paste resume content into the text area.', 'warning');
-                return;
-            }
-
-            if (!name) {
-                const firstLine = resumeText.split('\n')[0] || '';
-                if (firstLine && firstLine.length < 40 && !firstLine.includes('[')) {
-                    name = firstLine.split('|')[0].trim();
-                } else {
-                    name = "Applicant Candidate";
-                }
-                document.getElementById('screener-name').value = name;
-            }
-
-            const btn = document.getElementById('btn-run-screening');
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Analyzing Resume...</span>`;
-            btn.disabled = true;
-
-            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume against the target job position. Produce a structured JSON evaluation with candidate match scores across criteria.";
-            const userQuery = `Target Job Position: ${jobRole}\nCandidate Name: ${name}\nResume Text / Content:\n${resumeText || '[Image Resume Uploaded]'}\n\nAnalyze technical skills, work experience, communication style, and culture fit relative to the job position.`;
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                
-                const parts = [];
-                if (uploadedResumeImage) {
-                    parts.push({
-                        inlineData: {
-                            mimeType: uploadedResumeImage.mimeType,
-                            data: uploadedResumeImage.data
-                        }
-                    });
-                }
-                parts.push({ text: userQuery });
-
-                const payload = {
-                    contents: [{ parts: parts }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: { 
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                "score": { "type": "NUMBER" },
-                                "strengths": { "type": "ARRAY", "items": { "type": "STRING" } },
-                                "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } },
-                                "recommendation": { "type": "STRING" },
-                                "summary": { "type": "STRING" },
-                                "technicalScore": { "type": "NUMBER" },
-                                "experienceScore": { "type": "NUMBER" },
-                                "communicationScore": { "type": "NUMBER" },
-                                "cultureScore": { "type": "NUMBER" }
-                            },
-                            "propertyOrdering": ["score", "strengths", "weaknesses", "recommendation", "summary", "technicalScore", "experienceScore", "communicationScore", "cultureScore"]
-                        }
-                    }
-                };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                let parsed;
-                if (res.ok) {
-                    const data = await res.json();
-                    let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                    rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-                    try {
-                        parsed = JSON.parse(rawText);
-                    } catch (e) {
-                        console.warn("JSON parse warning, using fallback evaluator:", e);
-                    }
-                }
-
-                if (!parsed || typeof parsed.score !== 'number') {
-                    const sampleScore = Math.floor(Math.random() * 15) + 82;
-                    parsed = {
-                        score: sampleScore,
-                        strengths: [
-                            `Strong domain alignment for ${jobRole}`,
-                            'Demonstrated experience with modern software tools and workflows',
-                            'Clear communication and structured resume history'
-                        ],
-                        weaknesses: [
-                            'Further deep-dive technical interview recommended to verify specific framework mastery'
-                        ],
-                        recommendation: sampleScore >= 90 ? 'Strong Hire' : 'Hire',
-                        summary: `${name} presents a strong background suitable for ${jobRole}. Key capabilities align well with core responsibilities.`,
-                        technicalScore: Math.min(100, sampleScore + 2),
-                        experienceScore: Math.max(70, sampleScore - 4),
-                        communicationScore: 88,
-                        cultureScore: 90
-                    };
-                }
-
-                lastScreenedCandidate = {
-                    name,
-                    role: jobRole,
-                    score: Math.round(parsed.score),
-                    strengths: parsed.strengths || ['Relevant skills and experience'],
-                    weaknesses: parsed.weaknesses || ['Further interview review recommended'],
-                    recommendation: parsed.recommendation || 'Hire',
-                    summary: parsed.summary || 'Candidate displays solid alignment with position expectations.',
-                    avatar: null
-                };
-
-                document.getElementById('result-candidate-name').textContent = name;
-                document.getElementById('result-candidate-role').textContent = jobRole;
-                document.getElementById('result-match-badge').textContent = `${lastScreenedCandidate.score}% Match`;
-                document.getElementById('result-strengths').innerHTML = lastScreenedCandidate.strengths.map(s => `<li>${s}</li>`).join('');
-                document.getElementById('result-weaknesses').innerHTML = lastScreenedCandidate.weaknesses.map(w => `<li>${w}</li>`).join('');
-                document.getElementById('result-recommendation').textContent = lastScreenedCandidate.recommendation;
-                document.getElementById('result-summary').textContent = lastScreenedCandidate.summary;
-
-                document.getElementById('meter-tech').style.width = `${parsed.technicalScore || lastScreenedCandidate.score}%`;
-                document.getElementById('meter-exp').style.width = `${parsed.experienceScore || lastScreenedCandidate.score}%`;
-                document.getElementById('meter-comm').style.width = `${parsed.communicationScore || 85}%`;
-                document.getElementById('meter-fit').style.width = `${parsed.cultureScore || 90}%`;
-
-                const resultCard = document.getElementById('screening-result-card');
-                resultCard.classList.remove('hidden');
-                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-                showToast(`Evaluation report generated for ${name}!`, 'success');
-
-            } catch (err) {
-                console.error("Screening error:", err);
-                showToast("An error occurred during resume evaluation. Please try again.", "error");
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Run AI Evaluation Agent</span>`;
-                btn.disabled = false;
-            }
-        }
-
-        async function saveScreenedCandidate() {
-            if (!lastScreenedCandidate) return;
-
-            try {
-                if (!auth.currentUser) await signInAnonymously(auth);
-                const candidatesCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates');
-                await addDoc(candidatesCol, lastScreenedCandidate);
-
-                const activityFeed = document.getElementById('agent-activity-feed');
-                if (activityFeed) {
-                    activityFeed.insertAdjacentHTML('afterbegin', `
-                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
-                            <i class="fa-solid fa-cloud-arrow-up text-indigo-500 mt-0.5"></i>
-                            <div>
-                                <p class="font-medium text-slate-700">Persisted to Private Pipeline</p>
-                                <p class="text-slate-400">${lastScreenedCandidate.name} added to ${lastScreenedCandidate.role} (${lastScreenedCandidate.score}%)</p>
-                            </div>
-                        </div>
-                    `);
-                }
-
-                showToast(`Saved ${lastScreenedCandidate.name} to your private pipeline!`, 'success');
-                switchTab('candidates');
-            } catch (err) {
-                console.error("Error saving candidate:", err);
-                showToast("Error persisting candidate to user cloud.", "error");
-            }
-        }
-
-        async function generateJobWithAi() {
-            const titleInput = document.getElementById('job-title-input');
-            const title = titleInput.value.trim();
-            if (!title) {
-                showToast('Please enter a Job Title first so Gemini can construct the requisition details.', 'warning');
-                return;
-            }
-
-            const btn = document.getElementById('btn-ai-gen-job');
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Generating...</span>`;
-            btn.disabled = true;
-
-            const systemPrompt = "Act as an expert Talent Acquisition Strategist. Generate structured job requisition details based on the title.";
-            const userQuery = `Create a professional job description, department suggestion, and comma-separated required skills list for the title: "${title}". Respond ONLY in valid JSON with fields: "department", "skills", "description".`;
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: { responseMimeType: "application/json" }
-                };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
-
-                if (parsed.department) document.getElementById('job-dept-input').value = parsed.department;
-                if (parsed.skills) document.getElementById('job-skills-input').value = Array.isArray(parsed.skills) ? parsed.skills.join(', ') : parsed.skills;
-                if (parsed.description) document.getElementById('job-desc-input').value = parsed.description;
-
-                showToast("Generated position requirements!", "success");
-            } catch (e) {
-                console.error('Job generation error:', e);
-                showToast("Could not generate job details.", "error");
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Auto-Fill Details</span>`;
-                btn.disabled = false;
-            }
-        }
-
-        async function speakTextMessage(text, btnEl) {
-            const voice = document.getElementById('tts-voice-select').value || 'Zephyr';
-            const originalHtml = btnEl ? btnEl.innerHTML : '';
-            if (btnEl) btnEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Synthesizing...`;
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: text }] }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: voice }
-                            }
-                        }
-                    }
-                };
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType || 'audio/L16;rate=24000';
-
-                if (audioData) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
-                    
-                    const binary = window.atob(audioData);
-                    const len = binary.length;
-                    const bytes = new Uint8Array(len);
-                    for (let i = 0; i < len; i++) {
-                        bytes[i] = binary.charCodeAt(i);
-                    }
-                    
-                    const pcm16 = new Int16Array(bytes.buffer);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-                    
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-                } else {
-                    showToast("No audio returned from TTS engine.", "warning");
-                }
-            } catch (err) {
-                console.error("TTS error:", err);
-                showToast("Error generating voice playback.", "error");
-            } finally {
-                if (btnEl) btnEl.innerHTML = originalHtml;
-            }
-        }
-
-        function pcmToWav(pcm16, sampleRate) {
-            const numChannels = 1;
-            const byteRate = sampleRate * numChannels * 2;
-            const blockAlign = numChannels * 2;
-            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
-            const view = new DataView(buffer);
-
-            function writeString(view, offset, string) {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            }
-
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + pcm16.length * 2, true);
-            writeString(view, 8, 'WAVE');
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, 16, true);
-            writeString(view, 36, 'data');
-            view.setUint32(40, pcm16.length * 2, true);
-
-            for (let i = 0; i < pcm16.length; i++) {
-                view.setInt16(44 + i * 2, pcm16[i], true);
-            }
-
-            return new Blob([view], { type: 'audio/wav' });
-        }
-
-        async function generateCandidateAvatar() {
-            if (!currentSelectedCandidate) return;
-            const btn = document.getElementById('btn-gen-avatar');
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating...</span>`;
-            btn.disabled = true;
-
-            const prompt = `A professional corporate headshot avatar of candidate ${currentSelectedCandidate.name}, working as a ${currentSelectedCandidate.role}. Minimalist studio lighting, clean digital art.`;
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-                };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-                if (base64Data) {
-                    const imgUrl = `data:image/png;base64,${base64Data}`;
-                    currentSelectedCandidate.avatar = imgUrl;
-                    document.getElementById('modal-cand-avatar-container').innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover">`;
-
-                    if (currentSelectedCandidate.id && auth.currentUser) {
-                        const candDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates', currentSelectedCandidate.id);
-                        await updateDoc(candDoc, { avatar: imgUrl });
-                    }
-                    showToast("Generated candidate profile headshot!", "success");
-                }
-            } catch (err) {
-                console.error("Avatar Gen Error:", err);
-                showToast("Avatar generation failed.", "error");
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-image text-indigo-600"></i><span>AI Headshot</span>`;
-                btn.disabled = false;
-            }
-        }
-
-        function openOutreachModalFromCandidate() {
-            if (!currentSelectedCandidate) return;
-            document.getElementById('outreach-cand-title').textContent = `Candidate: ${currentSelectedCandidate.name} (${currentSelectedCandidate.role})`;
-            openModal('outreach-modal');
-            generateOutreachEmail();
-        }
-
-        async function generateOutreachEmail() {
-            if (!currentSelectedCandidate) return;
-            const type = document.getElementById('outreach-type').value;
-            const btn = document.getElementById('btn-gen-outreach');
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Drafting...</span>`;
-            btn.disabled = true;
-
-            const prompt = `You are a Senior Talent Acquisition Partner. Draft a personalized outreach email for candidate ${currentSelectedCandidate.name}.
-Role: ${currentSelectedCandidate.role}
-Match Score: ${currentSelectedCandidate.score}%
-Summary: ${currentSelectedCandidate.summary}
-Key Strengths: ${Array.isArray(currentSelectedCandidate.strengths) ? currentSelectedCandidate.strengths.join(', ') : currentSelectedCandidate.strengths}
-
-Purpose: ${type === 'invite' ? 'Interview Invitation' : type === 'offer' ? 'Job Offer Draft' : 'Constructive Feedback / Rejection'}.
-Provide subject line and clear email body.`;
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                const payload = { contents: [{ parts: [{ text: prompt }] }] };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                document.getElementById('outreach-content').value = text || 'Failed to generate content.';
-                showToast("Outreach draft generated!", "success");
-            } catch (err) {
-                console.error(err);
-                document.getElementById('outreach-content').value = `Subject: Update regarding your application for ${currentSelectedCandidate.role}\n\nDear ${currentSelectedCandidate.name},\n\nThank you for taking the time to speak with our recruitment team regarding the ${currentSelectedCandidate.role} position. We were impressed with your background.\n\nBest regards,\nNexusTalent AI Team`;
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Generate Email</span>`;
-                btn.disabled = false;
-            }
-        }
-
-        function copyOutreachEmail() {
-            const content = document.getElementById('outreach-content').value;
-            if (!content) return;
-            document.execCommand('copy');
-            showToast('Outreach email copied to clipboard!', 'success');
-        }
-
-        function startAiInterview() {
-            const candName = document.getElementById('interview-candidate-select').value;
-            if (!candName) {
-                showToast('Please select a candidate to initiate screening.', 'warning');
-                return;
-            }
-            const candidate = candidates.find(c => c.name === candName) || { name: candName, role: 'Software Engineer', score: 85 };
-            interviewHistory = [
-                { role: 'user', parts: [{ text: `You are an expert technical recruiter conducting a screening interview for ${candidate.name} who applied for ${candidate.role} with a match score of ${candidate.score}%. Ask the first welcoming screening question.` }] }
-            ];
-
-            const initialQuestion = `Hello ${candidate.name}! Welcome to your screening session for the ${candidate.role} role. Let's get started. Could you briefly introduce your background and highlight your experience with the key skills required for this position?`;
-
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML = `
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
-                    <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
-                        <p>${initialQuestion}</p>
-                        <button onclick="window.speakTextMessage('${initialQuestion.replace(/'/g, "\\'")}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
-                            <i class="fa-solid fa-volume-high"></i>
-                            <span>Listen Question (AI TTS)</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-            showToast(`Started screening session for ${candidate.name}`, 'info');
-        }
-
-        async function sendChatMessage(event) {
-            event.preventDefault();
-            const inputEl = document.getElementById('chat-input');
-            const text = inputEl.value.trim();
-            if (!text) return;
-
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML += `
-                <div class="flex items-start justify-end space-x-3">
-                    <div class="bg-indigo-600 text-white p-4 rounded-2xl rounded-tr-none text-sm max-w-xl shadow-sm">
-                        ${text}
-                    </div>
-                    <div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs shrink-0 font-bold">U</div>
-                </div>
-            `;
-            inputEl.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-
-            interviewHistory.push({ role: 'user', parts: [{ text: text }] });
-
-            try {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                const payload = { contents: interviewHistory };
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                const aiReply = result.candidates?.[0]?.content?.parts?.[0]?.text || "Thank you for sharing. Let's move to the next technical question.";
-
-                interviewHistory.push({ role: 'model', parts: [{ text: aiReply }] });
-                const sanitizedReply = aiReply.replace(/'/g, "\\'").replace(/\n/g, ' ');
-
-                chatMessages.innerHTML += `
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
-                        <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
-                            <p>${aiReply}</p>
-                            <button onclick="window.speakTextMessage('${sanitizedReply}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
-                                <i class="fa-solid fa-volume-high"></i>
-                                <span>Listen Answer (AI TTS)</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch (err) {
-                console.error(err);
-                showToast("Error processing chat message.", "error");
-            }
-        }
-
+        // Window exports
         window.toggleMobileSidebar = toggleMobileSidebar;
         window.switchTab = switchTab;
         window.openModal = openModal;
         window.closeModal = closeModal;
-        window.handleFileUpload = handleFileUpload;
-        window.clearUploadedFile = clearUploadedFile;
-        window.loadSampleResume = loadSampleResume;
-        window.handleCreateJob = handleCreateJob;
-        window.deleteJob = deleteJob;
-        window.deleteCandidate = deleteCandidate;
-        window.viewCandidateDetails = viewCandidateDetails;
-        window.runAiScreening = runAiScreening;
-        window.saveScreenedCandidate = saveScreenedCandidate;
-        window.generateJobWithAi = generateJobWithAi;
-        window.speakTextMessage = speakTextMessage;
-        window.generateCandidateAvatar = generateCandidateAvatar;
-        window.openOutreachModalFromCandidate = openOutreachModalFromCandidate;
-        window.generateOutreachEmail = generateOutreachEmail;
-        window.copyOutreachEmail = copyOutreachEmail;
-        window.startAiInterview = startAiInterview;
-        window.sendChatMessage = sendChatMessage;
+        window.loadJobscanSample = loadJobscanSample;
+        window.loadRequisitionIntoJobscan = loadRequisitionIntoJobscan;
+        window.handleJobscanFileUpload = handleJobscanFileUpload;
+        window.runJobscanMatch = runJobscanMatch;
+        window.injectMissingKeyword = injectMissingKeyword;
+        window.optimizeResumeWithAi = optimizeResumeWithAi;
+        window.copyOptimizedResume = copyOptimizedResume;
         window.renderCandidates = renderCandidates;
         window.renderJobs = renderJobs;
         window.renderDashboard = renderDashboard;
-        window.handleGoogleSignIn = handleGoogleSignIn;
-        window.switchAuthTab = switchAuthTab;
-        window.handleEmailAuth = handleEmailAuth;
-        window.handleSignOut = handleSignOut;
-        window.handleGuestSignIn = handleGuestSignIn;
-        window.filterCandidatesByJob = filterCandidatesByJob;
 
         window.onload = function() {
             initBackend();
-
-            const dropZone = document.getElementById('drop-zone');
-            if (dropZone) {
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    dropZone.addEventListener(eventName, (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50');
-                    }, false);
-                });
-
-                ['dragleave', 'drop'].forEach(eventName => {
-                    dropZone.addEventListener(eventName, (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
-                    }, false);
-                });
-
-                dropZone.addEventListener('drop', (e) => {
-                    const dt = e.dataTransfer;
-                    const files = dt.files;
-                    if (files && files.length > 0) {
-                        processResumeFile(files[0]);
-                    }
-                });
-            }
         };
     </script>
 </body>
