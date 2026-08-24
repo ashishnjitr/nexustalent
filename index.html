@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusTalent AI | Autonomous Recruitment Hub</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -21,26 +25,48 @@
                             500: '#6366f1',
                             600: '#4f46e5',
                             700: '#4338ca',
+                            900: '#1e1b4b',
                         }
                     }
                 }
             }
         }
     </script>
+    <style>
+        /* Custom Scrollbars and Keyframe Animations */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .toast-enter { animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-1rem) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased overflow-hidden">
+<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased overflow-hidden flex flex-col">
 
-    <div id="app" class="flex h-full w-full">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0">
-            <div class="p-5 flex items-center space-x-3 border-b border-slate-800">
-                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/30">
-                    <i class="fa-solid fa-brain-circuit text-xl"></i>
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col space-y-2.5 max-w-sm w-full pointer-events-none"></div>
+
+    <div id="app" class="flex h-full w-full relative overflow-hidden">
+        
+        <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden lg:hidden"></div>
+
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-transform duration-300 transform -translate-x-full lg:translate-x-0 shrink-0">
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-brain-circuit text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white tracking-wide text-base">NexusTalent AI</h1>
+                        <p class="text-[11px] text-slate-400">Autonomous Talent Hub</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="font-bold text-white tracking-wide">NexusTalent AI</h1>
-                    <p class="text-xs text-slate-400">Autonomous Talent Hub</p>
-                </div>
+                <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
             
             <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
@@ -66,74 +92,97 @@
                 </button>
             </nav>
 
-            <div class="p-4 border-t border-slate-800">
-                <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex flex-col space-y-2">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span class="text-xs font-medium text-slate-300">Gemini LLM Suite Active</span>
+            <div class="p-4 border-t border-slate-800 space-y-3">
+                <div id="sidebar-user-card" class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex items-center justify-between">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div id="user-avatar" class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="truncate">
+                            <p id="user-display-name" class="text-xs font-semibold text-white truncate">Guest User</p>
+                            <p id="user-display-email" class="text-[10px] text-slate-400 truncate">Not authenticated</p>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-slate-400">Text, TTS Audio & Image Flash Models</p>
+                    <button onclick="openModal('auth-modal')" id="btn-sidebar-auth" title="Sign In / Switch Profile" class="text-slate-400 hover:text-white p-1 text-xs">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                    </button>
+                </div>
+
+                <div class="bg-slate-800/40 p-2.5 rounded-xl border border-slate-700/40 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[11px] font-medium text-slate-300">Isolated User Cloud</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono" id="user-id-badge">Anon</span>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
-            <!-- Top Header -->
-            <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
-                <div class="flex items-center space-x-4">
-                    <h2 id="page-title" class="text-lg font-bold text-slate-800">Dashboard Overview</h2>
-                    <span id="api-status" class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 flex items-center space-x-1.5">
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 w-full">
+            <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <h2 id="page-title" class="text-base sm:text-lg font-bold text-slate-800">Dashboard Overview</h2>
+                    <span id="api-status" class="hidden sm:inline-flex px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 items-center space-x-1.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Cloud Persistence Syncing</span>
+                        <span id="header-user-status">Private Sandbox Connected</span>
                     </span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="openModal('new-job-modal')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-plus text-xs"></i>
-                        <span>New Job Requisition</span>
+                
+                <div class="flex items-center space-x-3">
+                    <button onclick="openModal('new-job-modal')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">New Job Requisition</span>
+                        <span class="sm:hidden">New Job</span>
+                    </button>
+                    
+                    <button onclick="openModal('auth-modal')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 border border-slate-200">
+                        <i class="fa-solid fa-user-circle text-indigo-600 text-sm"></i>
+                        <span id="top-auth-btn-text" class="hidden sm:inline">Sign In / Profile</span>
                     </button>
                 </div>
             </header>
 
-            <div id="content-container" class="flex-1 overflow-y-auto p-8">
+            <div id="content-container" class="flex-1 overflow-y-auto p-4 sm:p-8">
                 
-                <!-- TAB: DASHBOARD -->
                 <div id="tab-dashboard" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                             <div>
                                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Openings</p>
-                                <h3 id="stat-jobs" class="text-3xl font-bold text-slate-800 mt-1">4</h3>
+                                <h3 id="stat-jobs" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
                                 <i class="fa-solid fa-briefcase"></i>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Candidates</p>
-                                <h3 id="stat-candidates" class="text-3xl font-bold text-slate-800 mt-1">12</h3>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Applicants</p>
+                                <h3 id="stat-candidates" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
                                 <i class="fa-solid fa-users"></i>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Screened & Ranked</p>
-                                <h3 id="stat-screened" class="text-3xl font-bold text-slate-800 mt-1">9</h3>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Screened</p>
+                                <h3 id="stat-screened" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">0</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                             <div>
                                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Match Score</p>
-                                <h3 id="stat-score" class="text-3xl font-bold text-slate-800 mt-1">84%</h3>
+                                <h3 id="stat-score" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">0%</h3>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
                                 <i class="fa-solid fa-chart-line"></i>
                             </div>
                         </div>
@@ -142,8 +191,11 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                             <div class="flex items-center justify-between mb-4">
-                                <h4 class="font-bold text-slate-800">Top Ranked Candidates</h4>
-                                <button onclick="switchTab('candidates')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View All</button>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-base">Top Ranked Candidates</h4>
+                                    <p class="text-xs text-slate-400">Your private talent matches generated by Gemini AI</p>
+                                </div>
+                                <button onclick="switchTab('candidates')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Full Pipeline &rarr;</button>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
@@ -152,40 +204,30 @@
                                             <th class="py-3 px-4">Candidate</th>
                                             <th class="py-3 px-4">Applied Role</th>
                                             <th class="py-3 px-4">Match Score</th>
-                                            <th class="py-3 px-4">Status</th>
+                                            <th class="py-3 px-4">Recommendation</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dashboard-candidates-table" class="divide-y divide-slate-100 text-sm">
-                                        <!-- populated dynamically -->
+                                        <!-- Dynamic content -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
                             <div>
-                                <h4 class="font-bold text-slate-800 mb-2">Autonomous Agent Feed</h4>
-                                <p class="text-xs text-slate-400 mb-4">Recent automated actions taken by NexusTalent AI.</p>
-                                <div id="agent-activity-feed" class="space-y-3 text-xs">
-                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
-                                        <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
-                                        <div>
-                                            <p class="font-medium text-slate-700">Parsed & Scored Resume</p>
-                                            <p class="text-slate-400">Alex Chen matched with Senior Full Stack Engineer (94%)</p>
-                                        </div>
-                                    </div>
-                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
-                                        <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
-                                        <div>
-                                            <p class="font-medium text-slate-700">Screening Bot Completed</p>
-                                            <p class="text-slate-400">Sarah Jenkins completed initial technical questionnaire.</p>
-                                        </div>
-                                    </div>
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <i class="fa-solid fa-robot text-indigo-600"></i>
+                                    <h4 class="font-bold text-slate-800 text-base">Autonomous Agent Log</h4>
+                                </div>
+                                <p class="text-xs text-slate-400 mb-4">Isolated multi-tenant events & cloud sync</p>
+                                <div id="agent-activity-feed" class="space-y-3 text-xs max-h-64 overflow-y-auto">
+                                    <!-- Dynamic logs -->
                                 </div>
                             </div>
-                            <div class="mt-6 pt-4 border-t border-slate-100">
-                                <button onclick="switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all">
-                                    Analyze New Resume
+                            <div class="pt-4 border-t border-slate-100">
+                                <button onclick="switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Launch Resume Analyzer
                                 </button>
                             </div>
                         </div>
@@ -193,13 +235,14 @@
                 </div>
 
                 <div id="tab-jobs" class="space-y-6 hidden">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h3 class="text-xl font-bold text-slate-800">Job Requisitions</h3>
-                            <p class="text-xs text-slate-400">Manage active job listings and set AI evaluation criteria.</p>
+                            <p class="text-xs text-slate-400">Manage open positions and define targeted AI evaluation metrics for your account.</p>
                         </div>
-                        <button onclick="openModal('new-job-modal')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
-                            Add Job Position
+                        <button onclick="openModal('new-job-modal')" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm flex items-center space-x-2 self-start sm:self-auto">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Create Position</span>
                         </button>
                     </div>
 
@@ -209,51 +252,57 @@
                 </div>
 
                 <div id="tab-candidates" class="space-y-6 hidden">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 class="text-xl font-bold text-slate-800">Candidate Pipeline</h3>
-                            <p class="text-xs text-slate-400">All applicants evaluated and ranked by AI agents.</p>
+                            <p class="text-xs text-slate-400">All applicants evaluated and indexed in your secure sandbox.</p>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <select id="filter-job" onchange="renderCandidates()" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="all">All Job Roles</option>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative flex-1 sm:w-64">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="search-candidates" oninput="renderCandidates()" placeholder="Search candidates..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <select id="filter-job" onchange="renderCandidates()" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="all">All Roles</option>
                             </select>
-                            <button onclick="switchTab('screener')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+                            <button onclick="switchTab('screener')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 shrink-0">
                                 + Add Candidate
                             </button>
                         </div>
                     </div>
 
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-400 uppercase font-semibold">
-                                    <th class="py-3 px-6">Candidate Name</th>
-                                    <th class="py-3 px-6">Applied Role</th>
-                                    <th class="py-3 px-6">Match Score</th>
-                                    <th class="py-3 px-6">Key Strengths</th>
-                                    <th class="py-3 px-6">Recommendation</th>
-                                    <th class="py-3 px-6 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="candidates-full-table" class="divide-y divide-slate-100 text-sm">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-400 uppercase font-semibold">
+                                        <th class="py-3 px-6">Candidate Name</th>
+                                        <th class="py-3 px-6">Applied Role</th>
+                                        <th class="py-3 px-6">Match Score</th>
+                                        <th class="py-3 px-6">Top Strengths</th>
+                                        <th class="py-3 px-6">Recommendation</th>
+                                        <th class="py-3 px-6 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="candidates-full-table" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
                 <div id="tab-screener" class="space-y-6 hidden">
-                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
                         <div class="max-w-3xl mx-auto space-y-6">
                             <div>
-                                <h3 class="text-xl font-bold text-slate-800">AI Resume Parser & Matcher</h3>
-                                <p class="text-xs text-slate-400 mt-1">Upload or paste a candidate resume and select a job requisition to instantly generate deep AI recruitment insights.</p>
+                                <h3 class="text-xl font-bold text-slate-800">AI Resume Parser & Match Engine</h3>
+                                <p class="text-xs text-slate-400 mt-1">Upload a resume file or paste raw text to run multi-criteria Gemini evaluation.</p>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Select Target Job Position</label>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Target Job Position</label>
                                     <select id="screener-job-select" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                         <!-- Populated -->
                                     </select>
@@ -264,16 +313,25 @@
                                 </div>
                             </div>
 
+                            <!-- File Drag & Drop Upload Zone -->
                             <div>
                                 <div class="flex justify-between items-center mb-2">
-                                    <label class="block text-xs font-semibold text-slate-600 uppercase">Resume Content or Professional Summary</label>
-                                    <button onclick="loadSampleResume()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Load Sample Resume</button>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase">Upload or Paste Resume</label>
+                                    <button onclick="loadSampleResume()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
+                                        <i class="fa-solid fa-file-lines"></i>
+                                        <span>Load Sample Resume</span>
+                                    </button>
                                 </div>
-                                <textarea id="screener-resume" rows="6" placeholder="Paste candidate resume text here..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/30 p-4 rounded-xl text-center cursor-pointer transition-all mb-3">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500 mb-1"></i>
+                                    <p class="text-xs font-medium text-slate-700">Click to upload or drag & drop resume file (.txt, .md, text)</p>
+                                    <input type="file" id="file-input" onchange="handleFileUpload(event)" accept=".txt,.md,.text" class="hidden">
+                                </div>
+                                <textarea id="screener-resume" rows="6" placeholder="Paste full resume content here..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                             </div>
 
                             <div class="flex justify-end">
-                                <button onclick="runAiScreening()" id="btn-run-screening" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/30 flex items-center space-x-2">
+                                <button onclick="runAiScreening()" id="btn-run-screening" class="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center space-x-2">
                                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                                     <span>Run AI Evaluation Agent</span>
                                 </button>
@@ -281,11 +339,10 @@
                         </div>
                     </div>
 
-                    <!-- AI Result Output Card -->
-                    <div id="screening-result-card" class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hidden space-y-6">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div id="screening-result-card" class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm hidden space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
                             <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                                <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xl shrink-0">
                                     <i class="fa-solid fa-file-invoice"></i>
                                 </div>
                                 <div>
@@ -293,8 +350,36 @@
                                     <p id="result-candidate-role" class="text-xs text-slate-400">Position Evaluation</p>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div id="result-match-badge" class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-bold border border-emerald-200 inline-block">92% Match</div>
+                            <div>
+                                <div id="result-match-badge" class="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-base font-bold border border-emerald-200 inline-block">92% Match</div>
+                            </div>
+                        </div>
+
+                        <!-- Multi-criteria visual meters -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div>
+                                <p class="text-[11px] font-semibold text-slate-400 uppercase">Technical</p>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="meter-tech" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold text-slate-400 uppercase">Experience</p>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="meter-exp" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold text-slate-400 uppercase">Communication</p>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="meter-comm" class="bg-emerald-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold text-slate-400 uppercase">Culture Fit</p>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="meter-fit" class="bg-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -304,18 +389,18 @@
                                 <ul id="result-strengths" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside"></ul>
                             </div>
                             <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
-                                <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Gaps / Concerns</h5>
+                                <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Identified Gaps</h5>
                                 <ul id="result-weaknesses" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside"></ul>
                             </div>
                             <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 flex flex-col justify-between">
                                 <div>
                                     <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Agent Recommendation</h5>
-                                    <p id="result-recommendation" class="text-xs font-bold text-slate-800 mb-2"></p>
+                                    <p id="result-recommendation" class="text-sm font-bold text-slate-800 mb-2"></p>
                                     <p id="result-summary" class="text-xs text-slate-600 leading-relaxed"></p>
                                 </div>
                                 <div class="mt-4 pt-3 border-t border-slate-200">
-                                    <button onclick="saveScreenedCandidate()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">
-                                        Save to Pipeline
+                                    <button onclick="saveScreenedCandidate()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all">
+                                        <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Save Candidate to Private Pipeline
                                     </button>
                                 </div>
                             </div>
@@ -324,33 +409,33 @@
                 </div>
 
                 <div id="tab-interviewer" class="space-y-6 hidden">
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[calc(100vh-12rem)]">
-                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[calc(100vh-11rem)]">
+                        <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
                                     <i class="fa-solid fa-robot"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-slate-800">NexusTalent Bot</h4>
-                                    <p class="text-xs text-slate-400">Autonomous conversational pre-screener</p>
+                                    <h4 class="font-bold text-slate-800">NexusTalent Voice Assistant</h4>
+                                    <p class="text-xs text-slate-400">Conversational pre-screener powered by Gemini</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select id="interview-candidate-select" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700">
-                                    <option value="">Select Candidate to Interview</option>
+                                <select id="interview-candidate-select" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700">
+                                    <option value="">Select Candidate to Screen</option>
                                 </select>
-                                <button onclick="startAiInterview()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold">
-                                    Start Interview
+                                <button onclick="startAiInterview()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shrink-0">
+                                    Start Session
                                 </button>
                             </div>
                         </div>
 
                         <!-- Chat Box -->
-                        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+                        <div id="chat-messages" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/50">
                             <div class="flex items-start space-x-3">
-                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
                                 <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm">
-                                    Hello! I am NexusTalent, your autonomous hiring agent. Select a candidate above and click 'Start Interview' to initiate an automated screening session, or type below to chat directly with me about recruitment strategy!
+                                    Hello! I am NexusTalent, your autonomous recruiter. Select a candidate above and click 'Start Session' to begin an automated screening conversation, or type below to chat directly!
                                 </div>
                             </div>
                         </div>
@@ -360,7 +445,7 @@
                             <div class="flex items-center justify-between text-xs px-1 text-slate-500">
                                 <div class="flex items-center space-x-2">
                                     <i class="fa-solid fa-volume-high text-indigo-600"></i>
-                                    <span class="font-medium">AI TTS Voice Output:</span>
+                                    <span class="font-medium">Speech Output Voice:</span>
                                     <select id="tts-voice-select" class="px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none">
                                         <option value="Zephyr">Zephyr (Bright)</option>
                                         <option value="Kore">Kore (Firm)</option>
@@ -368,11 +453,11 @@
                                         <option value="Fenrir">Fenrir (Excitable)</option>
                                     </select>
                                 </div>
-                                <span class="text-[11px] text-slate-400">Powered by Gemini TTS (2.5-Flash)</span>
+                                <span class="text-[11px] text-slate-400 hidden sm:inline">Powered by Gemini 2.5-Flash TTS</span>
                             </div>
                             <form onsubmit="sendChatMessage(event)" class="flex space-x-3">
-                                <input type="text" id="chat-input" placeholder="Type a message or candidate answer..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all">
+                                <input type="text" id="chat-input" placeholder="Type a response or candidate answer..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <button type="submit" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shrink-0">
                                     Send
                                 </button>
                             </form>
@@ -384,7 +469,91 @@
         </main>
     </div>
 
-    <!-- New Job Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 relative">
+            <button onclick="closeModal('auth-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-3 shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-xl" id="auth-modal-title">Sign In to NexusTalent</h3>
+                <p class="text-xs text-slate-400">Access your private candidate pipeline and job requisitions.</p>
+            </div>
+
+            <!-- Auth Status Banner if signed in -->
+            <div id="auth-signed-in-box" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex items-center space-x-3">
+                    <div id="auth-active-avatar" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        U
+                    </div>
+                    <div class="truncate flex-1">
+                        <p id="auth-active-name" class="font-bold text-slate-800 text-sm truncate">Active Recruiter</p>
+                        <p id="auth-active-email" class="text-xs text-slate-500 truncate">user@example.com</p>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
+                    <span class="text-slate-500">Multi-tenant Privacy: <strong class="text-emerald-600">Enforced</strong></span>
+                    <button onclick="handleSignOut()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold transition-all">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+
+            <div id="auth-form-container" class="space-y-4">
+                <!-- Google Authentication Button -->
+                <button onclick="handleGoogleSignIn()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm flex items-center justify-center space-x-3 transition-all">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                </button>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-3 text-xs text-slate-400 font-medium">Or email sign in</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <!-- Tabs: Login vs Register -->
+                <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                    <button onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all">Log In</button>
+                    <button onclick="switchAuthTab('signup')" id="auth-tab-signup" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all">Create Account</button>
+                </div>
+
+                <form onsubmit="handleEmailAuth(event)" class="space-y-3">
+                    <div id="auth-name-field" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name</label>
+                        <input type="text" id="auth-name-input" placeholder="e.g. Alex Rivera" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address</label>
+                        <input type="email" id="auth-email-input" required placeholder="you@company.com" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                        <input type="password" id="auth-password-input" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <button type="submit" id="btn-submit-auth" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all">
+                        Log In to Account
+                    </button>
+                </form>
+
+                <div class="pt-2 text-center">
+                    <button onclick="handleGuestSignIn()" class="text-xs text-slate-500 hover:text-indigo-600 underline font-medium">
+                        Continue as Guest Recruiter (Instant Test Sandbox)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="new-job-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -417,14 +586,13 @@
                     <textarea id="job-desc-input" rows="4" required placeholder="Detailed description of responsibilities..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeModal('new-job-modal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Cancel</button>
-                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm">Create Job</button>
+                    <button type="button" onclick="closeModal('new-job-modal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm">Create Job</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Candidate Detail Modal -->
     <div id="candidate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -474,17 +642,16 @@
                 <p id="modal-cand-summary" class="text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 leading-relaxed"></p>
             </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                <button onclick="openOutreachModalFromCandidate()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all shadow-sm">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <button onclick="openOutreachModalFromCandidate()" class="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition-all shadow-sm">
                     <i class="fa-solid fa-paper-plane"></i>
-                    <span>Generate AI Candidate Outreach</span>
+                    <span>Generate Outreach Email</span>
                 </button>
-                <button onclick="closeModal('candidate-modal')" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">Close</button>
+                <button onclick="closeModal('candidate-modal')" class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- AI Outreach Email Modal -->
     <div id="outreach-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -517,7 +684,7 @@
                         <label class="block text-xs font-semibold text-slate-600 uppercase">Generated Email Content</label>
                         <button onclick="copyOutreachEmail()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
                             <i class="fa-solid fa-copy"></i>
-                            <span>Copy to Clipboard</span>
+                            <span>Copy Content</span>
                         </button>
                     </div>
                     <textarea id="outreach-content" rows="8" placeholder="Click 'Generate Email' to build a personalized email powered by Gemini..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
@@ -536,10 +703,30 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            updateProfile, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            collection, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot,
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Application Config & Firebase Init
+        // Application Config & Firebase Setup
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'nexustalent-app';
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
@@ -549,12 +736,17 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State Management
+        let currentUser = null;
+        let userId = null;
         let currentSelectedCandidate = null;
         let lastScreenedCandidate = null;
         let interviewHistory = [];
         let jobs = [];
         let candidates = [];
+        let currentAuthTab = 'login';
+
+        let unsubscribeJobs = null;
+        let unsubscribeCandidates = null;
 
         const initialJobs = [
             { title: 'Senior Full Stack Engineer', dept: 'Engineering', skills: 'React, TypeScript, Node.js, AWS', desc: 'Looking for an experienced full stack engineer to build scalable cloud applications.' },
@@ -568,28 +760,102 @@
             { name: 'Marcus Vance', role: 'Product Designer (UI/UX)', score: 78, strengths: ['Advanced Figma proficiency', 'Clean aesthetic portfolio'], weaknesses: ['Lacks deep SaaS enterprise experience'], recommendation: 'Further Review', summary: 'Talented designer but requires assessment on complex enterprise UX workflows.', avatar: null }
         ];
 
-        async function initBackend() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.warn("Auth initialization note:", err);
-            }
-            setupRealtimeSync();
+        // Custom Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto p-4 rounded-xl shadow-xl border text-xs font-semibold flex items-center space-x-3 toast-enter ${
+                type === 'success' ? 'bg-emerald-900 text-emerald-100 border-emerald-700' :
+                type === 'error' ? 'bg-red-900 text-red-100 border-red-700' :
+                type === 'warning' ? 'bg-amber-900 text-amber-100 border-amber-700' :
+                'bg-slate-900 text-white border-slate-700'
+            }`;
+
+            const icon = type === 'success' ? 'fa-circle-check text-emerald-400' :
+                         type === 'error' ? 'fa-triangle-exclamation text-red-400' :
+                         type === 'warning' ? 'fa-triangle-exclamation text-amber-400' :
+                         'fa-circle-info text-indigo-400';
+
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base"></i>
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 4000);
         }
 
-        function setupRealtimeSync() {
-            if (!auth.currentUser) return;
+        async function initBackend() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    userId = user.uid;
+                    updateUserUI(user);
+                    setupUserRealtimeSync(user);
+                } else {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (err) {
+                        console.warn("Auth initialization note:", err);
+                    }
+                }
+            });
+        }
 
-            const jobsCol = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
-            const candidatesCol = collection(db, 'artifacts', appId, 'public', 'data', 'candidates');
+        function updateUserUI(user) {
+            const isAnon = user.isAnonymous;
+            const displayName = user.displayName || (isAnon ? "Guest Recruiter" : user.email.split('@')[0]);
+            const email = user.email || (isAnon ? "Guest Mode (Session Sandbox)" : "Authenticated User");
+            const initial = displayName.charAt(0).toUpperCase();
 
-            // Listen to Job Requisitions
-            onSnapshot(jobsCol, async (snapshot) => {
+            document.getElementById('user-display-name').textContent = displayName;
+            document.getElementById('user-display-email').textContent = email;
+            document.getElementById('user-id-badge').textContent = user.uid.substring(0, 6);
+            document.getElementById('user-avatar').textContent = initial;
+
+            document.getElementById('auth-active-name').textContent = displayName;
+            document.getElementById('auth-active-email').textContent = email;
+            document.getElementById('auth-active-avatar').textContent = initial;
+
+            document.getElementById('header-user-status').textContent = isAnon ? "Guest Sandbox Active" : "Private Profile Connected";
+            document.getElementById('top-auth-btn-text').textContent = isAnon ? "Sign In / Register" : displayName;
+
+            if (isAnon) {
+                document.getElementById('auth-signed-in-box').classList.add('hidden');
+                document.getElementById('auth-form-container').classList.remove('hidden');
+            } else {
+                document.getElementById('auth-signed-in-box').classList.remove('hidden');
+                document.getElementById('auth-form-container').classList.add('hidden');
+            }
+        }
+
+        function setupUserRealtimeSync(user) {
+            if (!user) return;
+            const currentUid = user.uid;
+
+            // Unsubscribe existing listeners
+            if (unsubscribeJobs) unsubscribeJobs();
+            if (unsubscribeCandidates) unsubscribeCandidates();
+
+            // Strict MANDATORY RULE 1 - User Private Paths: /artifacts/{appId}/users/{userId}/{collectionName}
+            const jobsCol = collection(db, 'artifacts', appId, 'users', currentUid, 'jobs');
+            const candidatesCol = collection(db, 'artifacts', appId, 'users', currentUid, 'candidates');
+
+            // Listen to User's Jobs
+            unsubscribeJobs = onSnapshot(jobsCol, async (snapshot) => {
                 if (snapshot.empty) {
+                    // Seed starter data into user's private collection if brand new
                     for (const j of initialJobs) {
                         await addDoc(jobsCol, j);
                     }
@@ -599,10 +865,10 @@
                     populateDropdowns();
                     renderDashboard();
                 }
-            }, (err) => console.error("Jobs sync error:", err));
+            }, (err) => console.error("Private jobs sync error:", err));
 
-            // Listen to Candidates
-            onSnapshot(candidatesCol, async (snapshot) => {
+            // Listen to User's Candidates
+            unsubscribeCandidates = onSnapshot(candidatesCol, async (snapshot) => {
                 if (snapshot.empty) {
                     for (const c of initialCandidates) {
                         await addDoc(candidatesCol, c);
@@ -613,12 +879,104 @@
                     populateDropdowns();
                     renderDashboard();
                 }
-            }, (err) => console.error("Candidates sync error:", err));
+            }, (err) => console.error("Private candidates sync error:", err));
+        }
+
+        async function handleGoogleSignIn() {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                showToast("Signed in with Google successfully!", "success");
+                closeModal('auth-modal');
+            } catch (err) {
+                console.error("Google auth error:", err);
+                showToast("Google Sign-In blocked or unavailable. Trying email/guest alternative...", "warning");
+            }
+        }
+
+        function switchAuthTab(tab) {
+            currentAuthTab = tab;
+            const loginBtn = document.getElementById('auth-tab-login');
+            const signupBtn = document.getElementById('auth-tab-signup');
+            const nameField = document.getElementById('auth-name-field');
+            const submitBtn = document.getElementById('btn-submit-auth');
+            const modalTitle = document.getElementById('auth-modal-title');
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all";
+                signupBtn.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all";
+                nameField.classList.add('hidden');
+                submitBtn.textContent = "Log In to Account";
+                modalTitle.textContent = "Sign In to NexusTalent";
+            } else {
+                signupBtn.className = "flex-1 py-2 rounded-lg bg-white text-slate-800 shadow-sm transition-all";
+                loginBtn.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800 transition-all";
+                nameField.classList.remove('hidden');
+                submitBtn.textContent = "Create Recruiter Account";
+                modalTitle.textContent = "Create Your Account";
+            }
+        }
+
+        async function handleEmailAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email-input').value.trim();
+            const password = document.getElementById('auth-password-input').value.trim();
+            const name = document.getElementById('auth-name-input').value.trim();
+
+            if (!email || !password) {
+                showToast("Please enter email and password.", "warning");
+                return;
+            }
+
+            try {
+                if (currentAuthTab === 'signup') {
+                    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                    if (name && userCred.user) {
+                        await updateProfile(userCred.user, { displayName: name });
+                    }
+                    showToast("Account created successfully!", "success");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast("Signed in successfully!", "success");
+                }
+                closeModal('auth-modal');
+            } catch (err) {
+                console.error("Email auth error:", err);
+                showToast(err.message || "Authentication failed. Check credentials.", "error");
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                showToast("Signed out. Switched to Guest sandbox.", "info");
+                closeModal('auth-modal');
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to sign out.", "error");
+            }
+        }
+
+        async function handleGuestSignIn() {
+            try {
+                await signInAnonymously(auth);
+                showToast("Switched to isolated Guest workspace.", "info");
+                closeModal('auth-modal');
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         window.onload = function() {
             initBackend();
         };
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
 
         function switchTab(tabId) {
             ['dashboard', 'jobs', 'candidates', 'screener', 'interviewer'].forEach(t => {
@@ -642,9 +1000,14 @@
                 jobs: 'Job Requisitions Manager',
                 candidates: 'Candidate Pipeline',
                 screener: 'AI Resume Analyzer & Matcher',
-                interviewer: 'AI Screening Chat Bot'
+                interviewer: 'AI Voice & Text Screening Chat'
             };
             document.getElementById('page-title').textContent = titles[tabId];
+
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+                toggleMobileSidebar();
+            }
         }
 
         function openModal(modalId) {
@@ -678,6 +1041,19 @@
                     </td>
                 </tr>
             `).join('');
+
+            const feed = document.getElementById('agent-activity-feed');
+            if (feed && feed.children.length === 0) {
+                feed.innerHTML = `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
+                        <i class="fa-solid fa-user-shield text-indigo-500 mt-0.5"></i>
+                        <div>
+                            <p class="font-medium text-slate-700">Private Profile Active</p>
+                            <p class="text-slate-400">Data isolated under user sandbox context.</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function renderJobs() {
@@ -701,8 +1077,8 @@
                         </div>
                     </div>
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <span class="text-xs font-medium text-slate-500">${candidates.filter(c => c.role === j.title).length} Candidates</span>
-                        <button onclick="filterCandidatesByJob('${j.title}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Pipeline &rarr;</button>
+                        <span class="text-xs font-medium text-slate-500">${candidates.filter(c => c.role === j.title).length} Applicants</span>
+                        <button onclick="filterCandidatesByJob('${j.title}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Candidates &rarr;</button>
                     </div>
                 </div>
             `).join('');
@@ -710,13 +1086,18 @@
 
         function renderCandidates() {
             const filter = document.getElementById('filter-job').value;
+            const search = (document.getElementById('search-candidates')?.value || '').toLowerCase();
             const tbody = document.getElementById('candidates-full-table');
-            const filtered = filter === 'all' ? candidates : candidates.filter(c => c.role === filter);
+            
+            let filtered = filter === 'all' ? candidates : candidates.filter(c => c.role === filter);
+            if (search) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.role && c.role.toLowerCase().includes(search)));
+            }
 
             tbody.innerHTML = filtered.map(c => `
                 <tr class="hover:bg-slate-50 transition-all">
                     <td class="py-4 px-6 font-medium text-slate-800 flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-200">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-200 shrink-0">
                             ${c.avatar ? `<img src="${c.avatar}" class="w-full h-full object-cover">` : c.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <span>${c.name}</span>
@@ -746,15 +1127,15 @@
             jobSelects.forEach((select, idx) => {
                 if (!select) return;
                 const currentVal = select.value;
-                let html = idx === 1 ? '<option value="all">All Job Roles</option>' : '';
+                let html = idx === 1 ? '<option value="all">All Roles</option>' : '';
                 html += jobs.map(j => `<option value="${j.title}">${j.title} (${j.dept})</option>`).join('');
                 select.innerHTML = html;
-                select.value = currentVal;
+                if (currentVal) select.value = currentVal;
             });
 
             const intSelect = document.getElementById('interview-candidate-select');
             if (intSelect) {
-                intSelect.innerHTML = '<option value="">Select Candidate to Interview</option>' + candidates.map(c => `<option value="${c.name}">${c.name} - ${c.role}</option>`).join('');
+                intSelect.innerHTML = '<option value="">Select Candidate to Screen</option>' + candidates.map(c => `<option value="${c.name}">${c.name} - ${c.role}</option>`).join('');
             }
         }
 
@@ -764,49 +1145,98 @@
             renderCandidates();
         }
 
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('screener-resume').value = e.target.result;
+                showToast(`Loaded resume file: ${file.name}`, 'success');
+            };
+            reader.onerror = function() {
+                showToast("Could not read uploaded file.", "error");
+            };
+            reader.readAsText(file);
+        }
+
         function loadSampleResume() {
             document.getElementById('screener-name').value = 'Taylor Morgan';
             document.getElementById('screener-resume').value = `Taylor Morgan | Senior Software Engineer\nSummary: 6 years building modern web applications using React, TypeScript, and Node.js. Led frontend architecture for SaaS fintech platforms handling 2M+ daily active users.\nExperience:\n- Lead Frontend Engineer at TechCorp (2021-Present): Migrated legacy codebase to React 18 & Vite, reducing bundle size by 40%.\n- Full Stack Developer at CloudScale (2018-2021): Built RESTful APIs and microservices using Node.js, Express, and PostgreSQL on AWS.\nEducation: B.S. in Computer Science, Stanford University.`;
+            showToast("Sample resume loaded into text analyzer.", "info");
         }
 
         async function handleCreateJob(event) {
             event.preventDefault();
-            if (!auth.currentUser) return;
 
-            const newJob = {
-                title: document.getElementById('job-title-input').value,
-                dept: document.getElementById('job-dept-input').value,
-                skills: document.getElementById('job-skills-input').value,
-                desc: document.getElementById('job-desc-input').value
-            };
+            const title = document.getElementById('job-title-input').value.trim();
+            const dept = document.getElementById('job-dept-input').value.trim();
+            const skills = document.getElementById('job-skills-input').value.trim();
+            const desc = document.getElementById('job-desc-input').value.trim();
+
+            if (!title || !dept) {
+                showToast("Please complete job title and department.", "warning");
+                return;
+            }
+
+            const newJob = { title, dept, skills, desc };
+            const tempId = 'job-' + Date.now();
+            jobs.push({ id: tempId, ...newJob });
+            renderJobs();
+            populateDropdowns();
+            renderDashboard();
+
+            closeModal('new-job-modal');
+            event.target.reset();
+            showToast(`Created position in your sandbox: ${title}`, 'success');
 
             try {
-                const jobsCol = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
-                await addDoc(jobsCol, newJob);
-                closeModal('new-job-modal');
-                event.target.reset();
+                if (!auth.currentUser) await signInAnonymously(auth);
+                if (auth.currentUser) {
+                    // Strict MANDATORY RULE 1 - Save to User's Private Collection
+                    const jobsCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'jobs');
+                    const docRef = await addDoc(jobsCol, newJob);
+                    const idx = jobs.findIndex(j => j.id === tempId);
+                    if (idx !== -1) jobs[idx].id = docRef.id;
+                }
             } catch (err) {
-                console.error("Failed to add job:", err);
+                console.warn("Firestore user sync note:", err);
             }
         }
 
         async function deleteJob(jobId) {
-            if (!auth.currentUser || !jobId) return;
+            if (!jobId) return;
+            jobs = jobs.filter(j => j.id !== jobId);
+            renderJobs();
+            populateDropdowns();
+            renderDashboard();
+            showToast("Job requisition removed.", "info");
+
             try {
-                const jobDoc = doc(db, 'artifacts', appId, 'public', 'data', 'jobs', jobId);
-                await deleteDoc(jobDoc);
+                if (auth.currentUser && !jobId.startsWith('job-')) {
+                    const jobDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'jobs', jobId);
+                    await deleteDoc(jobDoc);
+                }
             } catch (err) {
-                console.error("Error deleting job:", err);
+                console.warn("Error deleting job from cloud:", err);
             }
         }
 
         async function deleteCandidate(candidateId) {
-            if (!auth.currentUser || !candidateId) return;
+            if (!candidateId) return;
+            candidates = candidates.filter(c => c.id !== candidateId);
+            renderCandidates();
+            populateDropdowns();
+            renderDashboard();
+            showToast("Candidate removed from pipeline.", "info");
+
             try {
-                const candDoc = doc(db, 'artifacts', appId, 'public', 'data', 'candidates', candidateId);
-                await deleteDoc(candDoc);
+                if (auth.currentUser && !candidateId.startsWith('cand-')) {
+                    const candDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates', candidateId);
+                    await deleteDoc(candDoc);
+                }
             } catch (err) {
-                console.error("Error deleting candidate:", err);
+                console.warn("Error deleting candidate from cloud:", err);
             }
         }
 
@@ -836,7 +1266,7 @@
             const resumeText = document.getElementById('screener-resume').value.trim();
 
             if (!name || !resumeText) {
-                alert('Please provide candidate name and resume text.');
+                showToast('Please provide candidate name and resume text.', 'warning');
                 return;
             }
 
@@ -844,8 +1274,8 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Analyzing Resume...</span>`;
             btn.disabled = true;
 
-            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume against the targeted job position. Produce a structured JSON evaluation.";
-            const userQuery = `Target Job: ${jobRole}\nCandidate: ${name}\nResume:\n${resumeText}\n\nRespond ONLY with JSON containing: "score" (number 0-100), "strengths" (array of strings), "weaknesses" (array of strings), "recommendation" (string: "Strong Hire", "Hire", or "Further Review"), "summary" (concise paragraph).`;
+            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume against the targeted job position. Produce a structured JSON evaluation with match scores.";
+            const userQuery = `Target Job: ${jobRole}\nCandidate: ${name}\nResume:\n${resumeText}\n\nRespond ONLY with JSON containing: "score" (number 0-100), "strengths" (array of strings), "weaknesses" (array of strings), "recommendation" (string: "Strong Hire", "Hire", or "Further Review"), "summary" (concise paragraph), "technicalScore" (0-100), "experienceScore" (0-100), "communicationScore" (0-100), "cultureScore" (0-100).`;
 
             try {
                 const apiKey = "";
@@ -883,11 +1313,17 @@
                 document.getElementById('result-recommendation').textContent = lastScreenedCandidate.recommendation;
                 document.getElementById('result-summary').textContent = lastScreenedCandidate.summary;
 
+                document.getElementById('meter-tech').style.width = `${parsed.technicalScore || parsed.score || 80}%`;
+                document.getElementById('meter-exp').style.width = `${parsed.experienceScore || parsed.score || 75}%`;
+                document.getElementById('meter-comm').style.width = `${parsed.communicationScore || 85}%`;
+                document.getElementById('meter-fit').style.width = `${parsed.cultureScore || 90}%`;
+
                 document.getElementById('screening-result-card').classList.remove('hidden');
+                showToast(`Evaluation completed for ${name}!`, 'success');
 
             } catch (err) {
                 console.error(err);
-                alert("Failed to analyze resume. Please try again.");
+                showToast("Failed to analyze resume. Please try again.", "error");
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Run AI Evaluation Agent</span>`;
                 btn.disabled = false;
@@ -895,10 +1331,12 @@
         }
 
         async function saveScreenedCandidate() {
-            if (!auth.currentUser || !lastScreenedCandidate) return;
+            if (!lastScreenedCandidate) return;
 
             try {
-                const candidatesCol = collection(db, 'artifacts', appId, 'public', 'data', 'candidates');
+                if (!auth.currentUser) await signInAnonymously(auth);
+                // Save to private user collection
+                const candidatesCol = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates');
                 await addDoc(candidatesCol, lastScreenedCandidate);
 
                 const activityFeed = document.getElementById('agent-activity-feed');
@@ -907,16 +1345,18 @@
                         <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
                             <i class="fa-solid fa-cloud-arrow-up text-indigo-500 mt-0.5"></i>
                             <div>
-                                <p class="font-medium text-slate-700">Persisted Candidate to Cloud</p>
+                                <p class="font-medium text-slate-700">Persisted to Private Pipeline</p>
                                 <p class="text-slate-400">${lastScreenedCandidate.name} added to ${lastScreenedCandidate.role} (${lastScreenedCandidate.score}%)</p>
                             </div>
                         </div>
                     `);
                 }
 
+                showToast(`Saved ${lastScreenedCandidate.name} to your private pipeline!`, 'success');
                 switchTab('candidates');
             } catch (err) {
                 console.error("Error saving candidate:", err);
+                showToast("Error persisting candidate to user cloud.", "error");
             }
         }
 
@@ -924,7 +1364,7 @@
             const titleInput = document.getElementById('job-title-input');
             const title = titleInput.value.trim();
             if (!title) {
-                alert('Please enter a Job Title first so Gemini can construct the requisition details.');
+                showToast('Please enter a Job Title first so Gemini can construct the requisition details.', 'warning');
                 return;
             }
 
@@ -956,8 +1396,10 @@
                 if (parsed.skills) document.getElementById('job-skills-input').value = Array.isArray(parsed.skills) ? parsed.skills.join(', ') : parsed.skills;
                 if (parsed.description) document.getElementById('job-desc-input').value = parsed.description;
 
+                showToast("Generated position requirements!", "success");
             } catch (e) {
                 console.error('Job generation error:', e);
+                showToast("Could not generate job details.", "error");
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Auto-Fill Details</span>`;
                 btn.disabled = false;
@@ -967,7 +1409,7 @@
         async function speakTextMessage(text, btnEl) {
             const voice = document.getElementById('tts-voice-select').value || 'Zephyr';
             const originalHtml = btnEl ? btnEl.innerHTML : '';
-            if (btnEl) btnEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Loading Audio...`;
+            if (btnEl) btnEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Synthesizing...`;
 
             try {
                 const apiKey = "";
@@ -1012,9 +1454,12 @@
                     
                     const audio = new Audio(audioUrl);
                     audio.play();
+                } else {
+                    showToast("No audio returned from TTS engine.", "warning");
                 }
             } catch (err) {
                 console.error("TTS error:", err);
+                showToast("Error generating voice playback.", "error");
             } finally {
                 if (btnEl) btnEl.innerHTML = originalHtml;
             }
@@ -1057,17 +1502,17 @@
         async function generateCandidateAvatar() {
             if (!currentSelectedCandidate) return;
             const btn = document.getElementById('btn-gen-avatar');
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating Avatar...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating...</span>`;
             btn.disabled = true;
 
-            const prompt = `A modern professional corporate avatar portrait of a job candidate named ${currentSelectedCandidate.name}, working as a ${currentSelectedCandidate.role}. Minimalist studio lighting, sleek digital art style, square aspect ratio.`;
+            const prompt = `A professional corporate headshot avatar of candidate ${currentSelectedCandidate.name}, working as a ${currentSelectedCandidate.role}. Minimalist studio lighting, clean digital art.`;
 
             try {
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseModalities: ['IMAGE'] }
+                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
                 };
 
                 const res = await fetch(apiUrl, {
@@ -1083,14 +1528,15 @@
                     currentSelectedCandidate.avatar = imgUrl;
                     document.getElementById('modal-cand-avatar-container').innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover">`;
 
-                    // Update candidate in backend store if ID exists
-                    if (currentSelectedCandidate.id) {
-                        const candDoc = doc(db, 'artifacts', appId, 'public', 'data', 'candidates', currentSelectedCandidate.id);
+                    if (currentSelectedCandidate.id && auth.currentUser) {
+                        const candDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'candidates', currentSelectedCandidate.id);
                         await updateDoc(candDoc, { avatar: imgUrl });
                     }
+                    showToast("Generated candidate profile headshot!", "success");
                 }
             } catch (err) {
                 console.error("Avatar Gen Error:", err);
+                showToast("Avatar generation failed.", "error");
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-image text-indigo-600"></i><span>AI Headshot</span>`;
                 btn.disabled = false;
@@ -1111,14 +1557,14 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Drafting...</span>`;
             btn.disabled = true;
 
-            const prompt = `You are a Senior Talent Partner. Write a personalized recruitment email for candidate ${currentSelectedCandidate.name}.
-Role Applied: ${currentSelectedCandidate.role}
+            const prompt = `You are a Senior Talent Acquisition Partner. Draft a personalized outreach email for candidate ${currentSelectedCandidate.name}.
+Role: ${currentSelectedCandidate.role}
 Match Score: ${currentSelectedCandidate.score}%
-Evaluation Summary: ${currentSelectedCandidate.summary}
+Summary: ${currentSelectedCandidate.summary}
 Key Strengths: ${Array.isArray(currentSelectedCandidate.strengths) ? currentSelectedCandidate.strengths.join(', ') : currentSelectedCandidate.strengths}
 
-Email Purpose: ${type === 'invite' ? 'Interview Invitation' : type === 'offer' ? 'Job Offer Letter' : 'Feedback / Rejection Email'}.
-Keep the subject line short and the message body clear, professional, and tailored.`;
+Purpose: ${type === 'invite' ? 'Interview Invitation' : type === 'offer' ? 'Job Offer Draft' : 'Constructive Feedback / Rejection'}.
+Provide subject line and clear email body.`;
 
             try {
                 const apiKey = "";
@@ -1133,6 +1579,7 @@ Keep the subject line short and the message body clear, professional, and tailor
                 const result = await res.json();
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 document.getElementById('outreach-content').value = text || 'Failed to generate content.';
+                showToast("Outreach draft generated!", "success");
             } catch (err) {
                 console.error(err);
                 document.getElementById('outreach-content').value = `Subject: Update regarding your application for ${currentSelectedCandidate.role}\n\nDear ${currentSelectedCandidate.name},\n\nThank you for taking the time to speak with our recruitment team regarding the ${currentSelectedCandidate.role} position. We were impressed with your background.\n\nBest regards,\nNexusTalent AI Team`;
@@ -1146,13 +1593,13 @@ Keep the subject line short and the message body clear, professional, and tailor
             const content = document.getElementById('outreach-content').value;
             if (!content) return;
             document.execCommand('copy');
-            alert('Outreach email text copied to clipboard!');
+            showToast('Outreach email copied to clipboard!', 'success');
         }
 
         function startAiInterview() {
             const candName = document.getElementById('interview-candidate-select').value;
             if (!candName) {
-                alert('Please select a candidate to initiate screening.');
+                showToast('Please select a candidate to initiate screening.', 'warning');
                 return;
             }
             const candidate = candidates.find(c => c.name === candName) || { name: candName, role: 'Software Engineer', score: 85 };
@@ -1160,12 +1607,12 @@ Keep the subject line short and the message body clear, professional, and tailor
                 { role: 'user', parts: [{ text: `You are an expert technical recruiter conducting a screening interview for ${candidate.name} who applied for ${candidate.role} with a match score of ${candidate.score}%. Ask the first welcoming screening question.` }] }
             ];
 
-            const initialQuestion = `Hello ${candidate.name}! Welcome to your automated screening session for the ${candidate.role} position. Let's get started. Could you briefly introduce your background and highlight your experience with the key requirements for this role?`;
+            const initialQuestion = `Hello ${candidate.name}! Welcome to your screening session for the ${candidate.role} role. Let's get started. Could you briefly introduce your background and highlight your experience with the key skills required for this position?`;
 
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = `
                 <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
                     <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
                         <p>${initialQuestion}</p>
                         <button onclick="speakTextMessage('${initialQuestion.replace(/'/g, "\\'")}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
@@ -1175,6 +1622,7 @@ Keep the subject line short and the message body clear, professional, and tailor
                     </div>
                 </div>
             `;
+            showToast(`Started screening session for ${candidate.name}`, 'info');
         }
 
         async function sendChatMessage(event) {
@@ -1189,7 +1637,7 @@ Keep the subject line short and the message body clear, professional, and tailor
                     <div class="bg-indigo-600 text-white p-4 rounded-2xl rounded-tr-none text-sm max-w-xl shadow-sm">
                         ${text}
                     </div>
-                    <div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs shrink-0">U</div>
+                    <div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs shrink-0 font-bold">U</div>
                 </div>
             `;
             inputEl.value = '';
@@ -1215,7 +1663,7 @@ Keep the subject line short and the message body clear, professional, and tailor
 
                 chatMessages.innerHTML += `
                     <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
                         <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
                             <p>${aiReply}</p>
                             <button onclick="speakTextMessage('${sanitizedReply}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
@@ -1228,13 +1676,16 @@ Keep the subject line short and the message body clear, professional, and tailor
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (err) {
                 console.error(err);
+                showToast("Error processing chat message.", "error");
             }
         }
 
-        // Attach global handlers to window object for inline HTML event listener access
+        // Expose global methods to window object
+        window.toggleMobileSidebar = toggleMobileSidebar;
         window.switchTab = switchTab;
         window.openModal = openModal;
         window.closeModal = closeModal;
+        window.handleFileUpload = handleFileUpload;
         window.loadSampleResume = loadSampleResume;
         window.handleCreateJob = handleCreateJob;
         window.deleteJob = deleteJob;
@@ -1252,6 +1703,12 @@ Keep the subject line short and the message body clear, professional, and tailor
         window.sendChatMessage = sendChatMessage;
         window.filterCandidatesByJob = filterCandidatesByJob;
         window.renderCandidates = renderCandidates;
+        window.showToast = showToast;
+        window.handleGoogleSignIn = handleGoogleSignIn;
+        window.switchAuthTab = switchAuthTab;
+        window.handleEmailAuth = handleEmailAuth;
+        window.handleSignOut = handleSignOut;
+        window.handleGuestSignIn = handleGuestSignIn;
     </script>
 </body>
 </html>
