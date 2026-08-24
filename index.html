@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusTalent AI | Autonomous Recruitment Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased overflow-hidden">
+
+    <div id="app" class="flex h-full w-full">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0">
+            <div class="p-5 flex items-center space-x-3 border-b border-slate-800">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-brain-circuit text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white tracking-wide">NexusTalent AI</h1>
+                    <p class="text-xs text-slate-400">Autonomous Talent Hub</p>
+                </div>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('jobs')" id="nav-jobs" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-briefcase w-5"></i>
+                    <span>Job Requisitions</span>
+                </button>
+                <button onclick="switchTab('candidates')" id="nav-candidates" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-users w-5"></i>
+                    <span>Candidate Pipeline</span>
+                </button>
+                <button onclick="switchTab('screener')" id="nav-screener" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5"></i>
+                    <span>AI Resume Analyzer</span>
+                </button>
+                <button onclick="switchTab('interviewer')" id="nav-interviewer" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-comments w-5"></i>
+                    <span>AI Screening Chat</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex flex-col space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="text-xs font-medium text-slate-300">Gemini LLM Suite Active</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400">Text, TTS Audio & Image Flash Models</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-4">
+                    <h2 id="page-title" class="text-lg font-bold text-slate-800">Dashboard Overview</h2>
+                    <span id="api-status" class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Cloud Persistence Syncing</span>
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="openModal('new-job-modal')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>New Job Requisition</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="content-container" class="flex-1 overflow-y-auto p-8">
+                
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Openings</p>
+                                <h3 id="stat-jobs" class="text-3xl font-bold text-slate-800 mt-1">4</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Candidates</p>
+                                <h3 id="stat-candidates" class="text-3xl font-bold text-slate-800 mt-1">12</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Screened & Ranked</p>
+                                <h3 id="stat-screened" class="text-3xl font-bold text-slate-800 mt-1">9</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Match Score</p>
+                                <h3 id="stat-score" class="text-3xl font-bold text-slate-800 mt-1">84%</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-slate-800">Top Ranked Candidates</h4>
+                                <button onclick="switchTab('candidates')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View All</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase font-semibold">
+                                            <th class="py-3 px-4">Candidate</th>
+                                            <th class="py-3 px-4">Applied Role</th>
+                                            <th class="py-3 px-4">Match Score</th>
+                                            <th class="py-3 px-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-candidates-table" class="divide-y divide-slate-100 text-sm">
+                                        <!-- populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800 mb-2">Autonomous Agent Feed</h4>
+                                <p class="text-xs text-slate-400 mb-4">Recent automated actions taken by NexusTalent AI.</p>
+                                <div id="agent-activity-feed" class="space-y-3 text-xs">
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
+                                        <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                                        <div>
+                                            <p class="font-medium text-slate-700">Parsed & Scored Resume</p>
+                                            <p class="text-slate-400">Alex Chen matched with Senior Full Stack Engineer (94%)</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
+                                        <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                                        <div>
+                                            <p class="font-medium text-slate-700">Screening Bot Completed</p>
+                                            <p class="text-slate-400">Sarah Jenkins completed initial technical questionnaire.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-100">
+                                <button onclick="switchTab('screener')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all">
+                                    Analyze New Resume
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-jobs" class="space-y-6 hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">Job Requisitions</h3>
+                            <p class="text-xs text-slate-400">Manage active job listings and set AI evaluation criteria.</p>
+                        </div>
+                        <button onclick="openModal('new-job-modal')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+                            Add Job Position
+                        </button>
+                    </div>
+
+                    <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="tab-candidates" class="space-y-6 hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">Candidate Pipeline</h3>
+                            <p class="text-xs text-slate-400">All applicants evaluated and ranked by AI agents.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select id="filter-job" onchange="renderCandidates()" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="all">All Job Roles</option>
+                            </select>
+                            <button onclick="switchTab('screener')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+                                + Add Candidate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-400 uppercase font-semibold">
+                                    <th class="py-3 px-6">Candidate Name</th>
+                                    <th class="py-3 px-6">Applied Role</th>
+                                    <th class="py-3 px-6">Match Score</th>
+                                    <th class="py-3 px-6">Key Strengths</th>
+                                    <th class="py-3 px-6">Recommendation</th>
+                                    <th class="py-3 px-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidates-full-table" class="divide-y divide-slate-100 text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-screener" class="space-y-6 hidden">
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="max-w-3xl mx-auto space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800">AI Resume Parser & Matcher</h3>
+                                <p class="text-xs text-slate-400 mt-1">Upload or paste a candidate resume and select a job requisition to instantly generate deep AI recruitment insights.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Select Target Job Position</label>
+                                    <select id="screener-job-select" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <!-- Populated -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Candidate Full Name</label>
+                                    <input type="text" id="screener-name" placeholder="e.g. Jordan Lee" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase">Resume Content or Professional Summary</label>
+                                    <button onclick="loadSampleResume()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Load Sample Resume</button>
+                                </div>
+                                <textarea id="screener-resume" rows="6" placeholder="Paste candidate resume text here..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+
+                            <div class="flex justify-end">
+                                <button onclick="runAiScreening()" id="btn-run-screening" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/30 flex items-center space-x-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>Run AI Evaluation Agent</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Result Output Card -->
+                    <div id="screening-result-card" class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hidden space-y-6">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                </div>
+                                <div>
+                                    <h4 id="result-candidate-name" class="font-bold text-slate-800 text-lg">Evaluation Report</h4>
+                                    <p id="result-candidate-role" class="text-xs text-slate-400">Position Evaluation</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div id="result-match-badge" class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-bold border border-emerald-200 inline-block">92% Match</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                                <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Key Strengths</h5>
+                                <ul id="result-strengths" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside"></ul>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                                <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Gaps / Concerns</h5>
+                                <ul id="result-weaknesses" class="space-y-1.5 text-xs text-slate-700 list-disc list-inside"></ul>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 flex flex-col justify-between">
+                                <div>
+                                    <h5 class="text-xs font-semibold text-slate-500 uppercase mb-2">Agent Recommendation</h5>
+                                    <p id="result-recommendation" class="text-xs font-bold text-slate-800 mb-2"></p>
+                                    <p id="result-summary" class="text-xs text-slate-600 leading-relaxed"></p>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-slate-200">
+                                    <button onclick="saveScreenedCandidate()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">
+                                        Save to Pipeline
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-interviewer" class="space-y-6 hidden">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[calc(100vh-12rem)]">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                                    <i class="fa-solid fa-robot"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">NexusTalent Bot</h4>
+                                    <p class="text-xs text-slate-400">Autonomous conversational pre-screener</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select id="interview-candidate-select" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700">
+                                    <option value="">Select Candidate to Interview</option>
+                                </select>
+                                <button onclick="startAiInterview()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold">
+                                    Start Interview
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Box -->
+                        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                                <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm">
+                                    Hello! I am NexusTalent, your autonomous hiring agent. Select a candidate above and click 'Start Interview' to initiate an automated screening session, or type below to chat directly with me about recruitment strategy!
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice TTS Bar & Chat Input -->
+                        <div class="p-4 border-t border-slate-100 bg-white space-y-3">
+                            <div class="flex items-center justify-between text-xs px-1 text-slate-500">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-volume-high text-indigo-600"></i>
+                                    <span class="font-medium">AI TTS Voice Output:</span>
+                                    <select id="tts-voice-select" class="px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none">
+                                        <option value="Zephyr">Zephyr (Bright)</option>
+                                        <option value="Kore">Kore (Firm)</option>
+                                        <option value="Puck">Puck (Upbeat)</option>
+                                        <option value="Fenrir">Fenrir (Excitable)</option>
+                                    </select>
+                                </div>
+                                <span class="text-[11px] text-slate-400">Powered by Gemini TTS (2.5-Flash)</span>
+                            </div>
+                            <form onsubmit="sendChatMessage(event)" class="flex space-x-3">
+                                <input type="text" id="chat-input" placeholder="Type a message or candidate answer..." class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all">
+                                    Send
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- New Job Modal -->
+    <div id="new-job-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Create Job Requisition</h3>
+                <button onclick="closeModal('new-job-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCreateJob(event)" class="space-y-4">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Job Title</label>
+                        <button type="button" onclick="generateJobWithAi()" id="btn-ai-gen-job" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center space-x-1">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>AI Auto-Fill Details</span>
+                        </button>
+                    </div>
+                    <input type="text" id="job-title-input" required placeholder="e.g. Senior Frontend Engineer" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Department</label>
+                    <input type="text" id="job-dept-input" required placeholder="e.g. Engineering" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Required Skills (Comma separated)</label>
+                    <input type="text" id="job-skills-input" required placeholder="React, TypeScript, Tailwind, Node.js" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Job Description & Requirements</label>
+                    <textarea id="job-desc-input" rows="4" required placeholder="Detailed description of responsibilities..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeModal('new-job-modal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm">Create Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Candidate Detail Modal -->
+    <div id="candidate-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-cand-avatar-container" class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold overflow-hidden border border-indigo-100 shrink-0">
+                        <i class="fa-solid fa-user text-xl" id="modal-cand-icon"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-cand-name" class="font-bold text-slate-800 text-lg">Candidate Name</h3>
+                        <p id="modal-cand-role" class="text-xs text-slate-400">Role</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="generateCandidateAvatar()" id="btn-gen-avatar" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+                        <i class="fa-solid fa-image text-indigo-600"></i>
+                        <span>AI Headshot</span>
+                    </button>
+                    <button onclick="closeModal('candidate-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-400 uppercase">Match Score</p>
+                    <p id="modal-cand-score" class="text-2xl font-bold text-indigo-600 mt-1">95%</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-400 uppercase">Recommendation</p>
+                    <p id="modal-cand-rec" class="text-sm font-bold text-emerald-600 mt-1">Strong Hire</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-semibold text-slate-400 uppercase mb-2">Key Strengths</h4>
+                <ul id="modal-cand-strengths" class="space-y-1 text-xs text-slate-700 list-disc list-inside"></ul>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-semibold text-slate-400 uppercase mb-2">Identified Gaps</h4>
+                <ul id="modal-cand-weaknesses" class="space-y-1 text-xs text-slate-700 list-disc list-inside"></ul>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-semibold text-slate-400 uppercase mb-2">Evaluation Summary</h4>
+                <p id="modal-cand-summary" class="text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 leading-relaxed"></p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button onclick="openOutreachModalFromCandidate()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all shadow-sm">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Generate AI Candidate Outreach</span>
+                </button>
+                <button onclick="closeModal('candidate-modal')" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Outreach Email Modal -->
+    <div id="outreach-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">AI Candidate Outreach Writer</h3>
+                        <p class="text-xs text-slate-400" id="outreach-cand-title">Personalized communication generator</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('outreach-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Purpose / Tone</label>
+                    <select id="outreach-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="invite">Interview Invitation (Friendly & Professional)</option>
+                        <option value="offer">Job Offer Draft (Enthusiastic)</option>
+                        <option value="rejection">Constructive Feedback / Rejection (Encouraging & Respectful)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Generated Email Content</label>
+                        <button onclick="copyOutreachEmail()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Copy to Clipboard</span>
+                        </button>
+                    </div>
+                    <textarea id="outreach-content" rows="8" placeholder="Click 'Generate Email' to build a personalized email powered by Gemini..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button onclick="closeModal('outreach-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Close</button>
+                <button onclick="generateOutreachEmail()" id="btn-gen-outreach" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Generate Email</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Application Config & Firebase Init
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'nexustalent-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : { apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project" };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Management
+        let currentSelectedCandidate = null;
+        let lastScreenedCandidate = null;
+        let interviewHistory = [];
+        let jobs = [];
+        let candidates = [];
+
+        const initialJobs = [
+            { title: 'Senior Full Stack Engineer', dept: 'Engineering', skills: 'React, TypeScript, Node.js, AWS', desc: 'Looking for an experienced full stack engineer to build scalable cloud applications.' },
+            { title: 'AI Research Scientist', dept: 'AI Lab', skills: 'Python, PyTorch, LLMs, Transformers', desc: 'Lead research in generative models and agentic workflows.' },
+            { title: 'Product Designer (UI/UX)', dept: 'Design', skills: 'Figma, Tailwind, User Research, Prototyping', desc: 'Craft intuitive interfaces for enterprise SaaS platforms.' }
+        ];
+
+        const initialCandidates = [
+            { name: 'Alex Chen', role: 'Senior Full Stack Engineer', score: 94, strengths: ['5+ years React & Node', 'AWS Certified Developer', 'Strong system architecture background'], weaknesses: ['Limited GraphQL production experience'], recommendation: 'Strong Hire', summary: 'Alex exhibits outstanding technical competency and directly matches core backend and frontend requirements.', avatar: null },
+            { name: 'Sarah Jenkins', role: 'AI Research Scientist', score: 89, strengths: ['PhD in Computer Science', 'Published papers on transformers', 'Proficient in PyTorch'], weaknesses: ['Slightly fewer years in commercial production'], recommendation: 'Hire', summary: 'Exceptional academic background with strong foundational AI capabilities.', avatar: null },
+            { name: 'Marcus Vance', role: 'Product Designer (UI/UX)', score: 78, strengths: ['Advanced Figma proficiency', 'Clean aesthetic portfolio'], weaknesses: ['Lacks deep SaaS enterprise experience'], recommendation: 'Further Review', summary: 'Talented designer but requires assessment on complex enterprise UX workflows.', avatar: null }
+        ];
+
+        async function initBackend() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization note:", err);
+            }
+            setupRealtimeSync();
+        }
+
+        function setupRealtimeSync() {
+            if (!auth.currentUser) return;
+
+            const jobsCol = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
+            const candidatesCol = collection(db, 'artifacts', appId, 'public', 'data', 'candidates');
+
+            // Listen to Job Requisitions
+            onSnapshot(jobsCol, async (snapshot) => {
+                if (snapshot.empty) {
+                    for (const j of initialJobs) {
+                        await addDoc(jobsCol, j);
+                    }
+                } else {
+                    jobs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderJobs();
+                    populateDropdowns();
+                    renderDashboard();
+                }
+            }, (err) => console.error("Jobs sync error:", err));
+
+            // Listen to Candidates
+            onSnapshot(candidatesCol, async (snapshot) => {
+                if (snapshot.empty) {
+                    for (const c of initialCandidates) {
+                        await addDoc(candidatesCol, c);
+                    }
+                } else {
+                    candidates = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderCandidates();
+                    populateDropdowns();
+                    renderDashboard();
+                }
+            }, (err) => console.error("Candidates sync error:", err));
+        }
+
+        window.onload = function() {
+            initBackend();
+        };
+
+        function switchTab(tabId) {
+            ['dashboard', 'jobs', 'candidates', 'screener', 'interviewer'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${t}`);
+                if (btn) {
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+                    btn.classList.add('hover:bg-slate-800', 'text-slate-400', 'hover:text-white');
+                }
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('hover:bg-slate-800', 'text-slate-400', 'hover:text-white');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/20');
+            }
+
+            const titles = {
+                dashboard: 'Dashboard Overview',
+                jobs: 'Job Requisitions Manager',
+                candidates: 'Candidate Pipeline',
+                screener: 'AI Resume Analyzer & Matcher',
+                interviewer: 'AI Screening Chat Bot'
+            };
+            document.getElementById('page-title').textContent = titles[tabId];
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        function renderDashboard() {
+            document.getElementById('stat-jobs').textContent = jobs.length;
+            document.getElementById('stat-candidates').textContent = candidates.length;
+            document.getElementById('stat-screened').textContent = candidates.length;
+            
+            const avg = Math.round(candidates.reduce((acc, c) => acc + (c.score || 0), 0) / (candidates.length || 1));
+            document.getElementById('stat-score').textContent = (isNaN(avg) ? 0 : avg) + '%';
+
+            const tbody = document.getElementById('dashboard-candidates-table');
+            tbody.innerHTML = candidates.slice(0, 5).map(c => `
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="py-3 px-4 font-medium text-slate-800">${c.name}</td>
+                    <td class="py-3 px-4 text-slate-600">${c.role}</td>
+                    <td class="py-3 px-4 font-semibold text-indigo-600">${c.score}%</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${c.score >= 90 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">
+                            ${c.recommendation}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderJobs() {
+            const grid = document.getElementById('jobs-grid');
+            grid.innerHTML = jobs.map(j => `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold">${j.dept}</span>
+                            <button onclick="deleteJob('${j.id}')" title="Delete Requisition" class="text-slate-400 hover:text-red-500 text-xs transition-all">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg">${j.title}</h4>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">${j.desc}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase mb-1">Required Skills</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${(j.skills || '').split(',').map(s => `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-xs">${s.trim()}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-500">${candidates.filter(c => c.role === j.title).length} Candidates</span>
+                        <button onclick="filterCandidatesByJob('${j.title}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View Pipeline &rarr;</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCandidates() {
+            const filter = document.getElementById('filter-job').value;
+            const tbody = document.getElementById('candidates-full-table');
+            const filtered = filter === 'all' ? candidates : candidates.filter(c => c.role === filter);
+
+            tbody.innerHTML = filtered.map(c => `
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="py-4 px-6 font-medium text-slate-800 flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-200">
+                            ${c.avatar ? `<img src="${c.avatar}" class="w-full h-full object-cover">` : c.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <span>${c.name}</span>
+                    </td>
+                    <td class="py-4 px-6 text-slate-600">${c.role}</td>
+                    <td class="py-4 px-6 font-semibold text-indigo-600">${c.score}%</td>
+                    <td class="py-4 px-6 text-xs text-slate-500 max-w-xs truncate">${Array.isArray(c.strengths) ? c.strengths.join(', ') : c.strengths}</td>
+                    <td class="py-4 px-6">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${c.recommendation === 'Strong Hire' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">
+                            ${c.recommendation}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <button onclick='viewCandidateDetails(${JSON.stringify(c).replace(/'/g, "&#39;")})' class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">
+                            View Report
+                        </button>
+                        <button onclick="deleteCandidate('${c.id}')" title="Delete Candidate" class="p-1.5 text-slate-400 hover:text-red-500 text-xs transition-all">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateDropdowns() {
+            const jobSelects = [document.getElementById('screener-job-select'), document.getElementById('filter-job')];
+            jobSelects.forEach((select, idx) => {
+                if (!select) return;
+                const currentVal = select.value;
+                let html = idx === 1 ? '<option value="all">All Job Roles</option>' : '';
+                html += jobs.map(j => `<option value="${j.title}">${j.title} (${j.dept})</option>`).join('');
+                select.innerHTML = html;
+                select.value = currentVal;
+            });
+
+            const intSelect = document.getElementById('interview-candidate-select');
+            if (intSelect) {
+                intSelect.innerHTML = '<option value="">Select Candidate to Interview</option>' + candidates.map(c => `<option value="${c.name}">${c.name} - ${c.role}</option>`).join('');
+            }
+        }
+
+        function filterCandidatesByJob(roleTitle) {
+            switchTab('candidates');
+            document.getElementById('filter-job').value = roleTitle;
+            renderCandidates();
+        }
+
+        function loadSampleResume() {
+            document.getElementById('screener-name').value = 'Taylor Morgan';
+            document.getElementById('screener-resume').value = `Taylor Morgan | Senior Software Engineer\nSummary: 6 years building modern web applications using React, TypeScript, and Node.js. Led frontend architecture for SaaS fintech platforms handling 2M+ daily active users.\nExperience:\n- Lead Frontend Engineer at TechCorp (2021-Present): Migrated legacy codebase to React 18 & Vite, reducing bundle size by 40%.\n- Full Stack Developer at CloudScale (2018-2021): Built RESTful APIs and microservices using Node.js, Express, and PostgreSQL on AWS.\nEducation: B.S. in Computer Science, Stanford University.`;
+        }
+
+        async function handleCreateJob(event) {
+            event.preventDefault();
+            if (!auth.currentUser) return;
+
+            const newJob = {
+                title: document.getElementById('job-title-input').value,
+                dept: document.getElementById('job-dept-input').value,
+                skills: document.getElementById('job-skills-input').value,
+                desc: document.getElementById('job-desc-input').value
+            };
+
+            try {
+                const jobsCol = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
+                await addDoc(jobsCol, newJob);
+                closeModal('new-job-modal');
+                event.target.reset();
+            } catch (err) {
+                console.error("Failed to add job:", err);
+            }
+        }
+
+        async function deleteJob(jobId) {
+            if (!auth.currentUser || !jobId) return;
+            try {
+                const jobDoc = doc(db, 'artifacts', appId, 'public', 'data', 'jobs', jobId);
+                await deleteDoc(jobDoc);
+            } catch (err) {
+                console.error("Error deleting job:", err);
+            }
+        }
+
+        async function deleteCandidate(candidateId) {
+            if (!auth.currentUser || !candidateId) return;
+            try {
+                const candDoc = doc(db, 'artifacts', appId, 'public', 'data', 'candidates', candidateId);
+                await deleteDoc(candDoc);
+            } catch (err) {
+                console.error("Error deleting candidate:", err);
+            }
+        }
+
+        function viewCandidateDetails(c) {
+            currentSelectedCandidate = c;
+            document.getElementById('modal-cand-name').textContent = c.name;
+            document.getElementById('modal-cand-role').textContent = c.role;
+            document.getElementById('modal-cand-score').textContent = c.score + '%';
+            document.getElementById('modal-cand-rec').textContent = c.recommendation;
+            document.getElementById('modal-cand-strengths').innerHTML = (c.strengths || []).map(s => `<li>${s}</li>`).join('');
+            document.getElementById('modal-cand-weaknesses').innerHTML = (c.weaknesses || []).map(w => `<li>${w}</li>`).join('');
+            document.getElementById('modal-cand-summary').textContent = c.summary;
+
+            const avatarContainer = document.getElementById('modal-cand-avatar-container');
+            if (c.avatar) {
+                avatarContainer.innerHTML = `<img src="${c.avatar}" class="w-full h-full object-cover">`;
+            } else {
+                avatarContainer.innerHTML = `<i class="fa-solid fa-user text-xl" id="modal-cand-icon"></i>`;
+            }
+
+            openModal('candidate-modal');
+        }
+
+        async function runAiScreening() {
+            const name = document.getElementById('screener-name').value.trim();
+            const jobRole = document.getElementById('screener-job-select').value;
+            const resumeText = document.getElementById('screener-resume').value.trim();
+
+            if (!name || !resumeText) {
+                alert('Please provide candidate name and resume text.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-run-screening');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Analyzing Resume...</span>`;
+            btn.disabled = true;
+
+            const systemPrompt = "Act as an expert Talent Acquisition AI agent. Analyze the provided resume against the targeted job position. Produce a structured JSON evaluation.";
+            const userQuery = `Target Job: ${jobRole}\nCandidate: ${name}\nResume:\n${resumeText}\n\nRespond ONLY with JSON containing: "score" (number 0-100), "strengths" (array of strings), "weaknesses" (array of strings), "recommendation" (string: "Strong Hire", "Hire", or "Further Review"), "summary" (concise paragraph).`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                lastScreenedCandidate = {
+                    name,
+                    role: jobRole,
+                    score: parsed.score || 85,
+                    strengths: parsed.strengths || ['Relevant technical background'],
+                    weaknesses: parsed.weaknesses || ['Further depth verification suggested'],
+                    recommendation: parsed.recommendation || 'Hire',
+                    summary: parsed.summary || 'Solid candidate match.',
+                    avatar: null
+                };
+
+                document.getElementById('result-candidate-name').textContent = name;
+                document.getElementById('result-candidate-role').textContent = jobRole;
+                document.getElementById('result-match-badge').textContent = `${lastScreenedCandidate.score}% Match`;
+                document.getElementById('result-strengths').innerHTML = lastScreenedCandidate.strengths.map(s => `<li>${s}</li>`).join('');
+                document.getElementById('result-weaknesses').innerHTML = lastScreenedCandidate.weaknesses.map(w => `<li>${w}</li>`).join('');
+                document.getElementById('result-recommendation').textContent = lastScreenedCandidate.recommendation;
+                document.getElementById('result-summary').textContent = lastScreenedCandidate.summary;
+
+                document.getElementById('screening-result-card').classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to analyze resume. Please try again.");
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Run AI Evaluation Agent</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        async function saveScreenedCandidate() {
+            if (!auth.currentUser || !lastScreenedCandidate) return;
+
+            try {
+                const candidatesCol = collection(db, 'artifacts', appId, 'public', 'data', 'candidates');
+                await addDoc(candidatesCol, lastScreenedCandidate);
+
+                const activityFeed = document.getElementById('agent-activity-feed');
+                if (activityFeed) {
+                    activityFeed.insertAdjacentHTML('afterbegin', `
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
+                            <i class="fa-solid fa-cloud-arrow-up text-indigo-500 mt-0.5"></i>
+                            <div>
+                                <p class="font-medium text-slate-700">Persisted Candidate to Cloud</p>
+                                <p class="text-slate-400">${lastScreenedCandidate.name} added to ${lastScreenedCandidate.role} (${lastScreenedCandidate.score}%)</p>
+                            </div>
+                        </div>
+                    `);
+                }
+
+                switchTab('candidates');
+            } catch (err) {
+                console.error("Error saving candidate:", err);
+            }
+        }
+
+        async function generateJobWithAi() {
+            const titleInput = document.getElementById('job-title-input');
+            const title = titleInput.value.trim();
+            if (!title) {
+                alert('Please enter a Job Title first so Gemini can construct the requisition details.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-ai-gen-job');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Generating...</span>`;
+            btn.disabled = true;
+
+            const systemPrompt = "Act as an expert Talent Acquisition Strategist. Generate structured job requisition details based on the title.";
+            const userQuery = `Create a professional job description, department suggestion, and comma-separated required skills list for the title: "${title}". Respond ONLY in valid JSON with fields: "department", "skills", "description".`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                if (parsed.department) document.getElementById('job-dept-input').value = parsed.department;
+                if (parsed.skills) document.getElementById('job-skills-input').value = Array.isArray(parsed.skills) ? parsed.skills.join(', ') : parsed.skills;
+                if (parsed.description) document.getElementById('job-desc-input').value = parsed.description;
+
+            } catch (e) {
+                console.error('Job generation error:', e);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Auto-Fill Details</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        async function speakTextMessage(text, btnEl) {
+            const voice = document.getElementById('tts-voice-select').value || 'Zephyr';
+            const originalHtml = btnEl ? btnEl.innerHTML : '';
+            if (btnEl) btnEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Loading Audio...`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: voice }
+                            }
+                        }
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || 'audio/L16;rate=24000';
+
+                if (audioData) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    
+                    const binary = window.atob(audioData);
+                    const len = binary.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    
+                    const pcm16 = new Int16Array(bytes.buffer);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                }
+            } catch (err) {
+                console.error("TTS error:", err);
+            } finally {
+                if (btnEl) btnEl.innerHTML = originalHtml;
+            }
+        }
+
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const byteRate = sampleRate * numChannels * 2;
+            const blockAlign = numChannels * 2;
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.length * 2, true);
+
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(44 + i * 2, pcm16[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        async function generateCandidateAvatar() {
+            if (!currentSelectedCandidate) return;
+            const btn = document.getElementById('btn-gen-avatar');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating Avatar...</span>`;
+            btn.disabled = true;
+
+            const prompt = `A modern professional corporate avatar portrait of a job candidate named ${currentSelectedCandidate.name}, working as a ${currentSelectedCandidate.role}. Minimalist studio lighting, sleek digital art style, square aspect ratio.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseModalities: ['IMAGE'] }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (base64Data) {
+                    const imgUrl = `data:image/png;base64,${base64Data}`;
+                    currentSelectedCandidate.avatar = imgUrl;
+                    document.getElementById('modal-cand-avatar-container').innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover">`;
+
+                    // Update candidate in backend store if ID exists
+                    if (currentSelectedCandidate.id) {
+                        const candDoc = doc(db, 'artifacts', appId, 'public', 'data', 'candidates', currentSelectedCandidate.id);
+                        await updateDoc(candDoc, { avatar: imgUrl });
+                    }
+                }
+            } catch (err) {
+                console.error("Avatar Gen Error:", err);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-image text-indigo-600"></i><span>AI Headshot</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        function openOutreachModalFromCandidate() {
+            if (!currentSelectedCandidate) return;
+            document.getElementById('outreach-cand-title').textContent = `Candidate: ${currentSelectedCandidate.name} (${currentSelectedCandidate.role})`;
+            openModal('outreach-modal');
+            generateOutreachEmail();
+        }
+
+        async function generateOutreachEmail() {
+            if (!currentSelectedCandidate) return;
+            const type = document.getElementById('outreach-type').value;
+            const btn = document.getElementById('btn-gen-outreach');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Drafting...</span>`;
+            btn.disabled = true;
+
+            const prompt = `You are a Senior Talent Partner. Write a personalized recruitment email for candidate ${currentSelectedCandidate.name}.
+Role Applied: ${currentSelectedCandidate.role}
+Match Score: ${currentSelectedCandidate.score}%
+Evaluation Summary: ${currentSelectedCandidate.summary}
+Key Strengths: ${Array.isArray(currentSelectedCandidate.strengths) ? currentSelectedCandidate.strengths.join(', ') : currentSelectedCandidate.strengths}
+
+Email Purpose: ${type === 'invite' ? 'Interview Invitation' : type === 'offer' ? 'Job Offer Letter' : 'Feedback / Rejection Email'}.
+Keep the subject line short and the message body clear, professional, and tailored.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                document.getElementById('outreach-content').value = text || 'Failed to generate content.';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('outreach-content').value = `Subject: Update regarding your application for ${currentSelectedCandidate.role}\n\nDear ${currentSelectedCandidate.name},\n\nThank you for taking the time to speak with our recruitment team regarding the ${currentSelectedCandidate.role} position. We were impressed with your background.\n\nBest regards,\nNexusTalent AI Team`;
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span>Generate Email</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        function copyOutreachEmail() {
+            const content = document.getElementById('outreach-content').value;
+            if (!content) return;
+            document.execCommand('copy');
+            alert('Outreach email text copied to clipboard!');
+        }
+
+        function startAiInterview() {
+            const candName = document.getElementById('interview-candidate-select').value;
+            if (!candName) {
+                alert('Please select a candidate to initiate screening.');
+                return;
+            }
+            const candidate = candidates.find(c => c.name === candName) || { name: candName, role: 'Software Engineer', score: 85 };
+            interviewHistory = [
+                { role: 'user', parts: [{ text: `You are an expert technical recruiter conducting a screening interview for ${candidate.name} who applied for ${candidate.role} with a match score of ${candidate.score}%. Ask the first welcoming screening question.` }] }
+            ];
+
+            const initialQuestion = `Hello ${candidate.name}! Welcome to your automated screening session for the ${candidate.role} position. Let's get started. Could you briefly introduce your background and highlight your experience with the key requirements for this role?`;
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
+                        <p>${initialQuestion}</p>
+                        <button onclick="speakTextMessage('${initialQuestion.replace(/'/g, "\\'")}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <span>Listen Question (AI TTS)</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function sendChatMessage(event) {
+            event.preventDefault();
+            const inputEl = document.getElementById('chat-input');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML += `
+                <div class="flex items-start justify-end space-x-3">
+                    <div class="bg-indigo-600 text-white p-4 rounded-2xl rounded-tr-none text-sm max-w-xl shadow-sm">
+                        ${text}
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs shrink-0">U</div>
+                </div>
+            `;
+            inputEl.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            interviewHistory.push({ role: 'user', parts: [{ text: text }] });
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = { contents: interviewHistory };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const aiReply = result.candidates?.[0]?.content?.parts?.[0]?.text || "Thank you for sharing. Let's move to the next technical question.";
+
+                interviewHistory.push({ role: 'model', parts: [{ text: aiReply }] });
+                const sanitizedReply = aiReply.replace(/'/g, "\\'").replace(/\n/g, ' ');
+
+                chatMessages.innerHTML += `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0">AI</div>
+                        <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 text-sm text-slate-700 max-w-xl shadow-sm space-y-2">
+                            <p>${aiReply}</p>
+                            <button onclick="speakTextMessage('${sanitizedReply}', this)" class="inline-flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-all border border-indigo-200">
+                                <i class="fa-solid fa-volume-high"></i>
+                                <span>Listen Answer (AI TTS)</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Attach global handlers to window object for inline HTML event listener access
+        window.switchTab = switchTab;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.loadSampleResume = loadSampleResume;
+        window.handleCreateJob = handleCreateJob;
+        window.deleteJob = deleteJob;
+        window.deleteCandidate = deleteCandidate;
+        window.viewCandidateDetails = viewCandidateDetails;
+        window.runAiScreening = runAiScreening;
+        window.saveScreenedCandidate = saveScreenedCandidate;
+        window.generateJobWithAi = generateJobWithAi;
+        window.speakTextMessage = speakTextMessage;
+        window.generateCandidateAvatar = generateCandidateAvatar;
+        window.openOutreachModalFromCandidate = openOutreachModalFromCandidate;
+        window.generateOutreachEmail = generateOutreachEmail;
+        window.copyOutreachEmail = copyOutreachEmail;
+        window.startAiInterview = startAiInterview;
+        window.sendChatMessage = sendChatMessage;
+        window.filterCandidatesByJob = filterCandidatesByJob;
+        window.renderCandidates = renderCandidates;
+    </script>
+</body>
+</html>
