@@ -58,6 +58,22 @@ st.markdown("""
         display: inline-block;
         margin: 2px;
     }
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease;
+    }
+    .hero-banner {
+        background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        color: white;
+        padding: 28px;
+        border-radius: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -466,41 +482,126 @@ with st.sidebar:
 
 
 # PAGE 1: DASHBOARD
-if navigation == "📊 Dashboard":
-    st.title("Recruitment Dashboard Overview")
-    st.caption(f"Welcome back, **{user_data['name']}**. Here is your private pipeline analytics.")
+elif navigation == "📊 Dashboard":
+    # Hero Welcome Banner
+    st.markdown(f"""
+    <div class="hero-banner">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #ffffff;">Welcome back, {user_data['name']}! 👋</h1>
+                <p style="margin: 6px 0 0 0; color: #e0e7ff; font-size: 14px;">Here is your real-time recruitment intelligence & pipeline health summary.</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2);">
+                <span style="font-size: 12px; font-weight: 600; color: #ffffff;">🏢 Workspace: <strong>{user_data['company']}</strong></span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Active Openings", len(jobs))
-    c2.metric("Total Candidates", len(candidates))
-    c3.metric("AI Screened", len(candidates))
-    
-    avg_score = int(sum(c['score'] for c in candidates) / len(candidates)) if candidates else 0
-    c4.metric("Avg Match Score", f"{avg_score}%")
+    # Quick Actions Row
+    q1, q2, q3, q4 = st.columns(4)
+    if q1.button("⚡ Fast AI Screener", use_container_width=True):
+        st.session_state.navigation = "🪄 AI Resume Analyzer"
+        st.rerun()
+    if q2.button("🎛️ Jobscan ATS Matcher", use_container_width=True):
+        st.session_state.navigation = "🎛️ Jobscan ATS Matcher"
+        st.rerun()
+    if q3.button("💼 New Requisition", use_container_width=True):
+        st.session_state.navigation = "💼 Job Requisitions"
+        st.rerun()
+    if q4.button("👥 Candidate Pipeline", use_container_width=True):
+        st.session_state.navigation = "👥 Candidate Pipeline"
+        st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Analytics Metric Cards
+    top_talent_count = len([c for c in candidates if c.get('score', 0) >= 85])
+    avg_score = int(sum(c.get('score', 0) for c in candidates) / len(candidates)) if candidates else 0
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("💼 Active Requisitions", len(jobs), help="Total open positions in workspace")
+    m2.metric("👥 Total Talent Pool", len(candidates), help="Total candidates evaluated across positions")
+    m3.metric("⭐ Top Match Candidates", top_talent_count, f"{int((top_talent_count/len(candidates))*100) if candidates else 0}% of pipeline")
+    m4.metric("📈 Avg Match Score", f"{avg_score}%", help="Average candidate match rating")
 
     st.divider()
 
-    col_main, col_feed = st.columns([2, 1])
+    # Main Grid Layout: Pipeline Breakdown vs Active Requisition Health
+    col_left, col_right = st.columns([2, 1])
 
-    with col_main:
-        st.subheader("Top Ranked Talent Pipeline")
+    with col_left:
+        st.subheader("🎯 Talent Pipeline Leaderboard")
         if candidates:
-            sorted_cand = sorted(candidates, key=lambda x: x['score'], reverse=True)
-            table_data = []
-            for cand in sorted_cand:
-                table_data.append({
-                    "Candidate Name": cand['name'],
-                    "Target Role": cand['role'],
-                    "Match Score": f"{cand['score']}%",
-                    "Recommendation": cand['recommendation']
-                })
-            st.dataframe(table_data, use_container_width=True)
-        else:
-            st.info("No candidates in your pipeline yet. Use **AI Resume Analyzer** or **Candidate Pipeline** to add candidates.")
+            sorted_cand = sorted(candidates, key=lambda x: x.get('score', 0), reverse=True)
+            for cand in sorted_cand[:6]:
+                score = cand.get('score', 0)
+                rec = cand.get('recommendation', 'Hire')
+                badge_bg = "#ecfdf5" if rec == "Strong Hire" else ("#eff6ff" if rec == "Hire" else ("#fffbeb" if rec == "Further Review" else "#fef2f2"))
+                badge_txt = "#047857" if rec == "Strong Hire" else ("#1d4ed8" if rec == "Hire" else ("#b45309" if rec == "Further Review" else "#dc2626"))
 
-    with col_feed:
-        st.subheader("Autonomous Agent Log")
-        for log in activity_logs[::-1]:
+                with st.container():
+                    st.markdown(f"""
+                    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 16px; color: #0f172a;">{cand['name']}</strong>
+                                <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Role: <strong>{cand.get('role', 'General')}</strong></p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background-color: {badge_bg}; color: {badge_txt}; padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 12px;">
+                                    {rec} ({score}%)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.progress(score / 100)
+        else:
+            st.info("No candidates in your pipeline yet. Click **Fast AI Screener** or **Candidate Pipeline** above to add candidates.")
+
+    with col_right:
+        st.subheader("📊 Pipeline Funnel")
+        if candidates:
+            strong_hires = len([c for c in candidates if c.get('recommendation') == 'Strong Hire'])
+            hires = len([c for c in candidates if c.get('recommendation') == 'Hire'])
+            reviews = len([c for c in candidates if c.get('recommendation') == 'Further Review'])
+            passes = len([c for c in candidates if c.get('recommendation') == 'Pass'])
+
+            st.write(f"**Strong Hire:** `{strong_hires}`")
+            st.progress(strong_hires / len(candidates))
+
+            st.write(f"**Hire:** `{hires}`")
+            st.progress(hires / len(candidates))
+
+            st.write(f"**Further Review:** `{reviews}`")
+            st.progress(reviews / len(candidates))
+
+            st.write(f"**Pass:** `{passes}`")
+            st.progress(passes / len(candidates))
+        else:
+            st.caption("Pipeline distribution metrics will populate once candidates are added.")
+
+        st.divider()
+
+        st.subheader("💼 Active Job Health")
+        if jobs:
+            for job in jobs:
+                linked = [c for c in candidates if c.get('role') == job['title'] or c.get('job_id') == job['id']]
+                avg_j_score = int(sum(c.get('score', 0) for c in linked) / len(linked)) if linked else 0
+                st.markdown(f"**{job['title']}**")
+                st.caption(f"🏢 Dept: {job['dept']} | 👥 Applicants: {len(linked)} | Avg Score: {avg_j_score}%")
+                st.progress(avg_j_score / 100 if linked else 0)
+        else:
+            st.caption("No open job requisitions. Create one to start tracking application health.")
+
+    st.divider()
+
+    # Activity Log Footer
+    st.subheader("🤖 Autonomous Agent Log Feed")
+    log_cols = st.columns(3)
+    for idx, log in enumerate(activity_logs[::-1][:6]):
+        with log_cols[idx % 3]:
             st.info(f"**[{log['time']}]** {log['msg']}")
 
 
