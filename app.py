@@ -90,6 +90,7 @@ if "users_db" not in st.session_state:
             "candidates": [
                 {
                     "id": "c1",
+                    "job_id": "j1",
                     "name": "Alex Chen",
                     "role": "Senior Full Stack Engineer",
                     "score": 94,
@@ -100,6 +101,7 @@ if "users_db" not in st.session_state:
                 },
                 {
                     "id": "c2",
+                    "job_id": "j2",
                     "name": "Sarah Jenkins",
                     "role": "AI Research Scientist",
                     "score": 89,
@@ -563,6 +565,7 @@ elif navigation == "🎛️ Jobscan ATS Matcher":
 # PAGE 3: JOB REQUISITIONS
 elif navigation == "💼 Job Requisitions":
     st.title("Job Requisitions Manager")
+    st.caption("Create positions and attach candidate profiles directly to requisitions in your logged-in workspace.")
 
     with st.expander("➕ Create New Job Requisition", expanded=False):
         j_title = st.text_input("Job Title", placeholder="e.g. Senior Frontend Engineer")
@@ -572,8 +575,9 @@ elif navigation == "💼 Job Requisitions":
 
         if st.button("Save Position", type="primary"):
             if j_title and j_dept:
+                new_j_id = f"j_{len(jobs)+1}_{int(datetime.now().timestamp())}"
                 jobs.append({
-                    "id": f"j_{len(jobs)+1}",
+                    "id": new_j_id,
                     "title": j_title,
                     "dept": j_dept,
                     "skills": j_skills,
@@ -585,16 +589,58 @@ elif navigation == "💼 Job Requisitions":
 
     st.divider()
     if jobs:
-        cols = st.columns(2)
         for idx, job in enumerate(jobs):
-            with cols[idx % 2]:
-                st.markdown(f"### {job['title']}")
-                st.caption(f"Department: {job['dept']}")
-                st.write(f"**Skills:** {job['skills']}")
+            linked_cands = [c for c in candidates if c.get('job_id') == job['id'] or c.get('role') == job['title']]
+            
+            with st.container():
+                st.markdown(f"### 💼 {job['title']}")
+                st.caption(f"🏢 **Department:** {job['dept']} | 🆔 **Requisition ID:** `{job['id']}` | 👥 **Applicants:** {len(linked_cands)}")
+                st.write(f"**Required Skills:** {job['skills']}")
                 st.write(job['desc'])
-                if st.button(f"Delete Position", key=f"del_job_{job['id']}"):
-                    user_data["jobs"] = [j for j in jobs if j['id'] != job['id']]
-                    st.rerun()
+
+                # List attached candidates
+                if linked_cands:
+                    st.markdown("**Candidates Linked to this Requisition:**")
+                    for lc in linked_cands:
+                        st.markdown(f"- **{lc['name']}** — Score: `{lc['score']}%` | Recommendation: **{lc['recommendation']}**")
+                else:
+                    st.caption("No candidates attached to this job requisition yet.")
+
+                col_add, col_del = st.columns([3, 1])
+                with col_add:
+                    with st.expander(f"➕ Add Candidate Profile directly to {job['title']}"):
+                        c_name = st.text_input("Candidate Full Name", key=f"c_name_{job['id']}")
+                        c_score = st.slider("Match Score (%)", 0, 100, 85, key=f"c_score_{job['id']}")
+                        c_rec = st.selectbox("Recommendation", ["Strong Hire", "Hire", "Further Review", "Pass"], key=f"c_rec_{job['id']}")
+                        c_strengths = st.text_input("Key Strengths (comma separated)", "Strong experience, Great communication", key=f"c_str_{job['id']}")
+                        c_gaps = st.text_input("Identified Gaps (comma separated)", "System design depth", key=f"c_gaps_{job['id']}")
+                        c_summary = st.text_area("Executive Summary", f"Qualified candidate evaluated for {job['title']}.", key=f"c_sum_{job['id']}")
+
+                        if st.button("Save Candidate to Job", key=f"btn_save_c_{job['id']}"):
+                            if c_name:
+                                new_cand = {
+                                    "id": f"c_{len(candidates)+1}_{int(datetime.now().timestamp())}",
+                                    "job_id": job['id'],
+                                    "name": c_name,
+                                    "role": job['title'],
+                                    "score": c_score,
+                                    "strengths": [s.strip() for s in c_strengths.split(',') if s.strip()],
+                                    "weaknesses": [g.strip() for g in c_gaps.split(',') if g.strip()],
+                                    "recommendation": c_rec,
+                                    "summary": c_summary
+                                }
+                                candidates.append(new_cand)
+                                activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Added candidate {c_name} to {job['title']}"})
+                                st.success(f"Candidate {c_name} saved under '{job['title']}'!")
+                                st.rerun()
+                            else:
+                                st.warning("Please enter candidate name.")
+
+                with col_del:
+                    if st.button("Delete Position", key=f"del_job_{job['id']}"):
+                        user_data["jobs"] = [j for j in jobs if j['id'] != job['id']]
+                        st.rerun()
+                st.divider()
     else:
         st.info("No active job requisitions found. Click 'Create New Job Requisition' above to get started.")
 
@@ -602,26 +648,85 @@ elif navigation == "💼 Job Requisitions":
 # PAGE 4: CANDIDATE PIPELINE
 elif navigation == "👥 Candidate Pipeline":
     st.title("Candidate Pipeline")
+    st.caption("Manage, search, and add candidate profiles linked against your job requisitions.")
 
-    search_term = st.text_input("🔍 Search Candidates by Name or Role", "")
-    filtered_cands = [c for c in candidates if search_term.lower() in c['name'].lower() or search_term.lower() in c['role'].lower()]
+    # Expander to add new candidate profile
+    with st.expander("➕ Add New Candidate Profile", expanded=False):
+        if not jobs:
+            st.warning("Please create at least one Job Requisition first under 'Job Requisitions'.")
+        else:
+            cand_job_title = st.selectbox("Select Target Job Requisition", [j['title'] for j in jobs], key="pipe_job_select")
+            selected_req = next((j for j in jobs if j['title'] == cand_job_title), jobs[0])
+
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                p_name = st.text_input("Candidate Full Name", placeholder="e.g. Jordan Lee", key="p_cand_name")
+                p_score = st.slider("Assessment / Match Score (%)", 0, 100, 80, key="p_cand_score")
+            with col_p2:
+                p_rec = st.selectbox("Hiring Recommendation", ["Strong Hire", "Hire", "Further Review", "Pass"], key="p_cand_rec")
+                p_strengths = st.text_input("Strengths (comma separated)", "React, TypeScript, AWS", key="p_cand_str")
+
+            p_gaps = st.text_input("Areas for Improvement / Gaps (comma separated)", "Limited GraphQL experience", key="p_cand_gaps")
+            p_summary = st.text_area("Candidate Overview / Summary", "Experienced candidate matching role criteria.", key="p_cand_sum")
+
+            if st.button("Save Candidate to Pipeline", type="primary", key="btn_pipe_add_cand"):
+                if p_name:
+                    candidates.append({
+                        "id": f"c_{len(candidates)+1}_{int(datetime.now().timestamp())}",
+                        "job_id": selected_req['id'],
+                        "name": p_name,
+                        "role": cand_job_title,
+                        "score": p_score,
+                        "strengths": [s.strip() for s in p_strengths.split(',') if s.strip()],
+                        "weaknesses": [g.strip() for g in p_gaps.split(',') if g.strip()],
+                        "recommendation": p_rec,
+                        "summary": p_summary
+                    })
+                    activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Added {p_name} to {cand_job_title}"})
+                    st.success(f"Candidate '{p_name}' successfully added to job '{cand_job_title}'!")
+                    st.rerun()
+                else:
+                    st.warning("Please provide candidate full name.")
+
+    st.divider()
+
+    # Filter by Requisition
+    col_filter1, col_filter2 = st.columns([2, 1])
+    with col_filter1:
+        search_term = st.text_input("🔍 Search Candidates by Name or Role", "")
+    with col_filter2:
+        job_filter_options = ["All Requisitions"] + [j['title'] for j in jobs]
+        selected_job_filter = st.selectbox("Filter by Job Requisition", job_filter_options)
+
+    filtered_cands = candidates
+    if selected_job_filter != "All Requisitions":
+        filtered_cands = [c for c in filtered_cands if c.get('role') == selected_job_filter or c.get('job_id') == next((j['id'] for j in jobs if j['title'] == selected_job_filter), '')]
+    if search_term:
+        filtered_cands = [c for c in filtered_cands if search_term.lower() in c['name'].lower() or search_term.lower() in c['role'].lower()]
 
     if filtered_cands:
         for cand in filtered_cands:
-            with st.expander(f"👤 {cand['name']} - {cand['role']} (Match Score: {cand['score']}%)"):
+            with st.expander(f"👤 {cand['name']} — {cand['role']} (Match Score: {cand['score']}%)"):
+                st.write(f"**Linked Job Requisition:** {cand['role']}")
                 st.write(f"**Recommendation:** {cand['recommendation']}")
                 st.write(f"**Summary:** {cand['summary']}")
-                st.write(f"**Strengths:** {', '.join(cand['strengths'])}")
-                st.write(f"**Gaps:** {', '.join(cand['weaknesses'])}")
+                st.write(f"**Strengths:** {', '.join(cand['strengths']) if isinstance(cand['strengths'], list) else cand['strengths']}")
+                st.write(f"**Gaps:** {', '.join(cand['weaknesses']) if isinstance(cand['weaknesses'], list) else cand['weaknesses']}")
                 
-                if st.button(f"Generate Outreach Draft for {cand['name']}", key=f"outreach_{cand['id']}"):
-                    prompt = f"Write a professional, warm interview invitation email for {cand['name']} for the {cand['role']} position highlighting their strengths in {', '.join(cand['strengths'])}."
-                    ai_draft = call_gemini_api(prompt)
-                    if not ai_draft:
-                        ai_draft = f"Subject: Interview Invitation - {cand['role']}\n\nHi {cand['name']},\n\nWe were impressed by your background and strengths in {', '.join(cand['strengths'])}. We would love to invite you to a short interview!\n\nBest regards,\n{user_data['name']} - {user_data['company']}"
-                    st.text_area("Generated Email Draft:", value=ai_draft, height=200)
+                col_c_out, col_c_del = st.columns([3, 1])
+                with col_c_out:
+                    if st.button(f"Generate Outreach Draft for {cand['name']}", key=f"outreach_{cand['id']}"):
+                        prompt = f"Write a professional, warm interview invitation email for {cand['name']} for the {cand['role']} position highlighting their strengths in {', '.join(cand['strengths']) if isinstance(cand['strengths'], list) else cand['strengths']}."
+                        ai_draft = call_gemini_api(prompt)
+                        if not ai_draft:
+                            ai_draft = f"Subject: Interview Invitation - {cand['role']}\n\nHi {cand['name']},\n\nWe were impressed by your background and strengths. We would love to invite you to a short interview for the {cand['role']} position!\n\nBest regards,\n{user_data['name']} - {user_data['company']}"
+                        st.text_area("Generated Email Draft:", value=ai_draft, height=200)
+                with col_c_del:
+                    if st.button(f"Delete Candidate", key=f"del_cand_{cand['id']}"):
+                        user_data["candidates"] = [c for c in candidates if c['id'] != cand['id']]
+                        st.rerun()
     else:
-        st.info("No candidates match your search.")
+        st.info("No candidates match your filter or search criteria.")
 
 
 # PAGE 5: AI RESUME ANALYZER
@@ -745,8 +850,10 @@ B.S. in Computer Science, UC Berkeley"""
                 # Save Candidate Option
                 st.divider()
                 if st.button("💾 Save Candidate to Pipeline", use_container_width=True):
+                    target_job_obj = next((j for j in jobs if j['title'] == target_job_title), None)
                     new_candidate = {
-                        "id": f"c_{len(candidates)+1}",
+                        "id": f"c_{len(candidates)+1}_{int(datetime.now().timestamp())}",
+                        "job_id": target_job_obj['id'] if target_job_obj else "j1",
                         "name": cand_name_input,
                         "role": target_job_title,
                         "score": score,
@@ -756,8 +863,8 @@ B.S. in Computer Science, UC Berkeley"""
                         "summary": eval_res.get("summary", "")
                     }
                     candidates.append(new_candidate)
-                    activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Saved {cand_name_input} ({score}% match) to pipeline."})
-                    st.success(f"Successfully added **{cand_name_input}** to candidate pipeline!")
+                    activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Saved {cand_name_input} ({score}% match) to pipeline under {target_job_title}."})
+                    st.success(f"Successfully added **{cand_name_input}** to candidate pipeline for **{target_job_title}**!")
 
 
 # PAGE 6: AI SCREENING CHAT
