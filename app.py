@@ -202,15 +202,32 @@ def call_gemini_api(prompt, system_instruction=None):
 
 
 def analyze_jobscan_match(jd_text, resume_text):
-    """Calculates Jobscan ATS skill gaps, keyword frequency, and formatting scores."""
+    """Calculates Jobscan ATS skill gaps, keyword frequency, and formatting scores dynamically for any job domain."""
     jd_clean = jd_text.lower()
     resume_clean = resume_text.lower()
 
-    hard_skills_catalog = ['react', 'typescript', 'javascript', 'node.js', 'node', 'aws', 'python', 'pytorch', 'transformers', 'docker', 'postgresql', 'graphql', 'figma', 'tailwind', 'microservices', 'ci/cd', 'rest apis', 'cuda', 'git', 'sql', 'express', 'vite']
-    soft_skills_catalog = ['communication', 'leadership', 'teamwork', 'agile', 'problem solving', 'collaboration', 'adaptability', 'management', 'time management']
+    # Dynamic extraction of keywords from Job Description
+    base_catalog = ['react', 'typescript', 'javascript', 'node.js', 'node', 'aws', 'python', 'pytorch', 'transformers', 
+                    'docker', 'postgresql', 'graphql', 'figma', 'tailwind', 'microservices', 'ci/cd', 'rest apis', 'cuda', 
+                    'git', 'sql', 'express', 'vite', 'excel', 'financial modeling', 'salesforce', 'seo', 'marketing', 
+                    'project management', 'agile', 'scrum', 'data analysis', 'accounting', 'budgeting', 'kubernetes', 'java', 'c++']
+    
+    # Extract capital terms / key phrases from JD
+    words_in_jd = set(re.findall(r'\b[a-zA-Z0-9\.\+#]{3,}\b', jd_clean))
+    stopwords = {'with', 'from', 'that', 'have', 'this', 'will', 'your', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'every', 'building', 'looking', 'experienced', 'responsibilities', 'qualifications', 'requirements', 'department', 'position', 'title', 'summary', 'about', 'role', 'team', 'work'}
+    jd_keywords = [w for w in words_in_jd if w not in stopwords and len(w) > 2]
 
-    jd_hard = [s for s in hard_skills_catalog if s in jd_clean]
+    # Combine catalog matches and JD extracted terms
+    jd_hard = [s for s in base_catalog if s in jd_clean]
+    for k in jd_keywords:
+        if k not in jd_hard and len(k) > 3 and jd_clean.count(k) >= 1:
+            jd_hard.append(k)
+    jd_hard = list(set(jd_hard))[:15]
+
+    soft_skills_catalog = ['communication', 'leadership', 'teamwork', 'agile', 'problem solving', 'collaboration', 'adaptability', 'management', 'time management', 'critical thinking', 'creativity']
     jd_soft = [s for s in soft_skills_catalog if s in jd_clean]
+    if not jd_soft:
+        jd_soft = ['communication', 'teamwork', 'problem solving']
 
     matched_hard = [s for s in jd_hard if s in resume_clean]
     missing_hard = [s for s in jd_hard if s not in resume_clean]
@@ -218,26 +235,26 @@ def analyze_jobscan_match(jd_text, resume_text):
     matched_soft = [s for s in jd_soft if s in resume_clean]
     missing_soft = [s for s in jd_soft if s not in resume_clean]
 
-    has_metrics = bool(re.search(r'\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent)\b', resume_text, re.I))
+    has_metrics = bool(re.search(r'\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent|k|m|b)\b', resume_text, re.I))
     has_contact = bool(re.search(r'@|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}', resume_text))
     word_count = len(resume_text.split())
-    good_length = 200 <= word_count <= 1000
-    has_sections = bool(re.search(r'experience|education|skills|summary', resume_text, re.I))
+    good_length = 150 <= word_count <= 1200
+    has_sections = bool(re.search(r'experience|education|skills|summary|work|projects', resume_text, re.I))
 
     hard_score = (len(matched_hard) / len(jd_hard)) * 60 if jd_hard else 45
     soft_score = (len(matched_soft) / len(jd_soft)) * 25 if jd_soft else 20
     audit_score = (sum([has_metrics, has_contact, good_length, has_sections])) * 3.75
 
-    overall = min(98, int(hard_score + soft_score + audit_score))
+    overall = min(98, max(25, int(hard_score + soft_score + audit_score)))
 
     # Keyword matrix
-    all_keywords = list(set(jd_hard + jd_soft))
+    all_keywords = list(set(jd_hard[:10] + jd_soft[:5]))
     keyword_matrix = []
     for kw in all_keywords:
-        jd_c = len(re.findall(re.escape(kw), jd_clean))
-        res_c = len(re.findall(re.escape(kw), resume_clean))
-        status = "Optimal" if res_c >= jd_c else ("Low" if res_c > 0 else "Missing")
-        keyword_matrix.append({"keyword": kw, "jd_count": jd_c, "resume_count": res_c, "status": status})
+        jd_c = len(re.findall(r'\b' + re.escape(kw) + r'\b', jd_clean))
+        res_c = len(re.findall(r'\b' + re.escape(kw) + r'\b', resume_clean))
+        status = "Optimal" if res_c >= jd_c and res_c > 0 else ("Low" if res_c > 0 else "Missing")
+        keyword_matrix.append({"keyword": kw, "jd_count": max(1, jd_c), "resume_count": res_c, "status": status})
 
     return {
         "overall_score": overall,
@@ -257,7 +274,7 @@ def analyze_jobscan_match(jd_text, resume_text):
 
 
 def perform_ai_resume_analysis(target_job_title, target_job_desc, cand_name, resume_text):
-    """Generates detailed positive, negative, scoring, and hiring feedback for a resume."""
+    """Generates detailed positive, negative, scoring, and dynamic hiring feedback for a resume."""
     resume_clean = resume_text.lower()
     jd_clean = (target_job_title + " " + target_job_desc).lower()
 
@@ -275,13 +292,13 @@ Respond ONLY in valid JSON format with the following keys:
     "exp_score": <number 0-100>,
     "soft_score": <number 0-100>,
     "recommendation": <"Strong Hire" | "Hire" | "Further Review" | "Pass">,
-    "positive_feedback": [<array of 3-5 specific positive strengths/pros>],
-    "negative_feedback": [<array of 2-4 specific negative weaknesses/gaps/risks>],
-    "summary": <string executive rationale paragraph>,
-    "interview_questions": [<array of 3 probing interview questions targeting gaps>]
+    "positive_feedback": [<array of 3-5 specific positive strengths/pros based on this candidate's resume>],
+    "negative_feedback": [<array of 2-4 specific negative weaknesses/gaps/risks in this candidate's background>],
+    "summary": <string executive rationale paragraph for this candidate>,
+    "interview_questions": [<array of 3 probing interview questions targeting this specific candidate's missing skills or experience gaps>]
 }}"""
 
-    ai_raw = call_gemini_api(prompt, system_instruction="You are an expert executive talent recruiter providing detailed, objective candidate feedback.")
+    ai_raw = call_gemini_api(prompt, system_instruction="You are an expert executive talent recruiter providing detailed, objective candidate feedback based strictly on the provided resume.")
     if ai_raw:
         try:
             cleaned_raw = re.sub(r'```json\s*|\s*```', '', ai_raw).strip()
@@ -290,17 +307,25 @@ Respond ONLY in valid JSON format with the following keys:
         except Exception:
             pass
 
-    # High-precision fallback analyzer
-    hard_catalog = ['react', 'typescript', 'javascript', 'node.js', 'node', 'aws', 'python', 'pytorch', 'transformers', 'docker', 'postgresql', 'graphql', 'figma', 'tailwind', 'microservices', 'ci/cd', 'rest apis', 'cuda', 'git', 'sql', 'express', 'vite', 'agile', 'leadership']
-    found_skills = [s for s in hard_catalog if s in resume_clean]
-    missing_skills = [s for s in hard_catalog if s in jd_clean and s not in resume_clean]
+    # Dynamic high-precision fallback analyzer (works without API key)
+    jd_terms = set(re.findall(r'\b[a-zA-Z0-9\.\+#]{3,}\b', jd_clean))
+    stopwords = {'with', 'from', 'that', 'have', 'this', 'will', 'your', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'every', 'building', 'looking', 'experienced', 'responsibilities', 'qualifications', 'requirements', 'department', 'position', 'title', 'summary', 'about', 'role', 'team', 'work', 'candidates', 'candidate'}
+    required_keywords = [w for w in jd_terms if w not in stopwords and len(w) > 3]
 
-    has_metrics = bool(re.search(r'\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent)\b', resume_text, re.I))
+    found_skills = [w for w in required_keywords if w in resume_clean]
+    missing_skills = [w for w in required_keywords if w not in resume_clean]
+
+    has_metrics = bool(re.search(r'\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent|k|m|b)\b', resume_text, re.I))
+    has_contact = bool(re.search(r'@|\d{3}[-.\s]?\d{3}[-.\s]?\d{4}', resume_text))
     word_count = len(resume_text.split())
 
-    tech_score = min(96, max(50, 60 + len(found_skills) * 5))
-    exp_score = 88 if has_metrics else 72
-    soft_score = 85 if 'leadership' in resume_clean or 'agile' in resume_clean or 'team' in resume_clean else 70
+    exp_years_match = re.search(r'(\d+)\+?\s*years', resume_text, re.I)
+    years_exp = exp_years_match.group(1) if exp_years_match else None
+
+    match_ratio = (len(found_skills) / len(required_keywords)) if required_keywords else 0.7
+    tech_score = min(98, max(40, int(match_ratio * 100)))
+    exp_score = min(95, 85 if has_metrics else 70) + (5 if years_exp and int(years_exp) >= 3 else 0)
+    soft_score = 88 if any(k in resume_clean for k in ['leadership', 'agile', 'team', 'collaboration', 'managed', 'led']) else 72
     overall_score = int((tech_score * 0.45) + (exp_score * 0.35) + (soft_score * 0.20))
 
     if overall_score >= 88:
@@ -314,29 +339,49 @@ Respond ONLY in valid JSON format with the following keys:
 
     positives = []
     if found_skills:
-        positives.append(f"Direct match in core tech stack: {', '.join([s.capitalize() for s in found_skills[:5]])}")
+        positives.append(f"Demonstrated match for key role requirements: {', '.join([s.capitalize() for s in found_skills[:5]])}.")
     if has_metrics:
-        positives.append("Resume contains quantified performance metrics and measurable achievements.")
-    if word_count >= 250:
-        positives.append("Detailed career history with clear project responsibilities and progression.")
-    positives.append("Strong technical background aligning with fundamental role requirements.")
+        positives.append("Resume includes quantified metrics and measurable achievements (percentages, revenue, or scale).")
+    if years_exp:
+        positives.append(f"Explicitly highlights {years_exp}+ years of relevant industry experience.")
+    elif word_count >= 200:
+        positives.append("Well-structured career progression with defined responsibilities.")
+    if has_contact:
+        positives.append("Includes verified contact information and formatted professional profile.")
+    if not positives:
+        positives.append("Basic professional resume format with identifiable job history.")
 
     negatives = []
     if missing_skills:
-        negatives.append(f"Lacks explicit production mention of required skills: {', '.join([s.capitalize() for s in missing_skills[:4]])}")
-    else:
-        negatives.append("Lacks specific production architectural benchmarks for enterprise workloads.")
+        negatives.append(f"Missing explicit keywords required by job description: {', '.join([s.capitalize() for s in missing_skills[:4]])}.")
     if not has_metrics:
-        negatives.append("Fewer quantitative business outcomes (percentages or revenue impact) highlighted.")
-    negatives.append("Cloud deployment and system scaling depth should be probed in technical round.")
+        negatives.append("Lacks quantified performance metrics or business impact statistics.")
+    if word_count < 200:
+        negatives.append("Resume content is relatively brief; requires deeper verification of past project scope.")
+    if not negatives:
+        negatives.append("Production scalability and high-availability experience should be verified during technical rounds.")
 
-    summary = f"{cand_name} demonstrates a {overall_score}% alignment for the {target_job_title} role. Key technical competencies match target requirements well, though specific areas regarding high-scale deployment require further interview verification."
+    summary = f"{cand_name} demonstrates a {overall_score}% overall alignment for the {target_job_title} position. Found key competencies including {', '.join([s.capitalize() for s in found_skills[:3]]) if found_skills else 'core fundamentals'}. "
+    if missing_skills:
+        summary += f"Gaps were detected in {', '.join([s.capitalize() for s in missing_skills[:2]])}, which should be probed in candidate interviews."
+    else:
+        summary += "The background matches expected technical and operational requirements closely."
 
-    questions = [
-        f"Can you detail your hands-on experience with {missing_skills[0].capitalize() if missing_skills else 'system architecture'} in a production environment?",
-        "How do you measure and optimize project performance and reliability when facing tight delivery deadlines?",
-        "Describe a time when you had to make a technical trade-off under resource constraints."
-    ]
+    # Dynamic interview questions based on candidate's SPECIFIC missing skills and experience gaps
+    questions = []
+    if missing_skills:
+        questions.append(f"Can you walk us through your practical, production-level experience with {missing_skills[0].capitalize()}?")
+    else:
+        questions.append(f"How have you architected solutions specifically for {target_job_title} roles under tight performance constraints?")
+
+    if len(missing_skills) > 1:
+        questions.append(f"How would you bridge your current skill gap regarding {missing_skills[1].capitalize()} if selected for this position?")
+    elif not has_metrics:
+        questions.append("Can you quantify the primary business or engineering impact of your most recent major project?")
+    else:
+        questions.append("What performance metrics or benchmarks do you monitor to evaluate project success?")
+
+    questions.append("Describe a challenging technical trade-off you had to make recently and how you justified the decision.")
 
     return {
         "overall_score": overall_score,
@@ -877,11 +922,17 @@ B.S. in Computer Science, UC Berkeley"""
 
     resume_file = st.file_uploader("Upload Resume Document (PDF, DOCX, TXT)", type=["pdf", "docx", "txt"], key="screener_file")
     
+    if resume_file:
+        parsed_from_file = parse_uploaded_file(resume_file)
+        if parsed_from_file:
+            st.session_state.analyzer_sample_text = parsed_from_file
+            st.success(f"Successfully extracted text from '{resume_file.name}'!")
+
     default_text = st.session_state.get("analyzer_sample_text", "")
     resume_text_input = st.text_area("Or Paste Resume Text Below:", value=default_text, height=200, placeholder="Paste candidate resume content here...")
 
     if st.button("⚡ Run Comprehensive AI Resume Evaluation", type="primary", use_container_width=True):
-        extracted = parse_uploaded_file(resume_file) if resume_file else resume_text_input
+        extracted = resume_text_input
         if not extracted.strip():
             st.warning("Please upload a resume file or paste resume content to proceed.")
         else:
