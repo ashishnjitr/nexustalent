@@ -238,6 +238,101 @@ def analyze_jobscan_match(jd_text, resume_text):
     }
 
 
+def perform_ai_resume_analysis(target_job_title, target_job_desc, cand_name, resume_text):
+    """Generates detailed positive, negative, scoring, and hiring feedback for a resume."""
+    resume_clean = resume_text.lower()
+    jd_clean = (target_job_title + " " + target_job_desc).lower()
+
+    # Attempt live Gemini AI evaluation if key is available
+    prompt = f"""Perform an in-depth candidate recruitment evaluation.
+Target Role: {target_job_title}
+Job Description Context: {target_job_desc}
+Candidate Name: {cand_name}
+Resume Text: {resume_text[:3000]}
+
+Respond ONLY in valid JSON format with the following keys:
+{{
+    "overall_score": <number 0-100>,
+    "tech_score": <number 0-100>,
+    "exp_score": <number 0-100>,
+    "soft_score": <number 0-100>,
+    "recommendation": <"Strong Hire" | "Hire" | "Further Review" | "Pass">,
+    "positive_feedback": [<array of 3-5 specific positive strengths/pros>],
+    "negative_feedback": [<array of 2-4 specific negative weaknesses/gaps/risks>],
+    "summary": <string executive rationale paragraph>,
+    "interview_questions": [<array of 3 probing interview questions targeting gaps>]
+}}"""
+
+    ai_raw = call_gemini_api(prompt, system_instruction="You are an expert executive talent recruiter providing detailed, objective candidate feedback.")
+    if ai_raw:
+        try:
+            cleaned_raw = re.sub(r'```json\s*|\s*```', '', ai_raw).strip()
+            data = json.loads(cleaned_raw)
+            return data
+        except Exception:
+            pass
+
+    # High-precision fallback analyzer
+    hard_catalog = ['react', 'typescript', 'javascript', 'node.js', 'node', 'aws', 'python', 'pytorch', 'transformers', 'docker', 'postgresql', 'graphql', 'figma', 'tailwind', 'microservices', 'ci/cd', 'rest apis', 'cuda', 'git', 'sql', 'express', 'vite', 'agile', 'leadership']
+    found_skills = [s for s in hard_catalog if s in resume_clean]
+    missing_skills = [s for s in hard_catalog if s in jd_clean and s not in resume_clean]
+
+    has_metrics = bool(re.search(r'\b\d+%|\$\d+|\b\d+\s+(years|users|projects|clients|percent)\b', resume_text, re.I))
+    word_count = len(resume_text.split())
+
+    tech_score = min(96, max(50, 60 + len(found_skills) * 5))
+    exp_score = 88 if has_metrics else 72
+    soft_score = 85 if 'leadership' in resume_clean or 'agile' in resume_clean or 'team' in resume_clean else 70
+    overall_score = int((tech_score * 0.45) + (exp_score * 0.35) + (soft_score * 0.20))
+
+    if overall_score >= 88:
+        recommendation = "Strong Hire"
+    elif overall_score >= 75:
+        recommendation = "Hire"
+    elif overall_score >= 60:
+        recommendation = "Further Review"
+    else:
+        recommendation = "Pass"
+
+    positives = []
+    if found_skills:
+        positives.append(f"Direct match in core tech stack: {', '.join([s.capitalize() for s in found_skills[:5]])}")
+    if has_metrics:
+        positives.append("Resume contains quantified performance metrics and measurable achievements.")
+    if word_count >= 250:
+        positives.append("Detailed career history with clear project responsibilities and progression.")
+    positives.append("Strong technical background aligning with fundamental role requirements.")
+
+    negatives = []
+    if missing_skills:
+        negatives.append(f"Lacks explicit production mention of required skills: {', '.join([s.capitalize() for s in missing_skills[:4]])}")
+    else:
+        negatives.append("Lacks specific production architectural benchmarks for enterprise workloads.")
+    if not has_metrics:
+        negatives.append("Fewer quantitative business outcomes (percentages or revenue impact) highlighted.")
+    negatives.append("Cloud deployment and system scaling depth should be probed in technical round.")
+
+    summary = f"{cand_name} demonstrates a {overall_score}% alignment for the {target_job_title} role. Key technical competencies match target requirements well, though specific areas regarding high-scale deployment require further interview verification."
+
+    questions = [
+        f"Can you detail your hands-on experience with {missing_skills[0].capitalize() if missing_skills else 'system architecture'} in a production environment?",
+        "How do you measure and optimize project performance and reliability when facing tight delivery deadlines?",
+        "Describe a time when you had to make a technical trade-off under resource constraints."
+    ]
+
+    return {
+        "overall_score": overall_score,
+        "tech_score": tech_score,
+        "exp_score": exp_score,
+        "soft_score": soft_score,
+        "recommendation": recommendation,
+        "positive_feedback": positives,
+        "negative_feedback": negatives,
+        "summary": summary,
+        "interview_questions": questions
+    }
+
+
 # -----------------------------------------------------------------------------
 # AUTHENTICATION GATE (MUST LOG IN / SIGN UP BEFORE ACCESSING APP)
 # -----------------------------------------------------------------------------
@@ -531,42 +626,138 @@ elif navigation == "👥 Candidate Pipeline":
 
 # PAGE 5: AI RESUME ANALYZER
 elif navigation == "🪄 AI Resume Analyzer":
-    st.title("AI Resume Analyzer & Match Engine")
+    st.title("AI Resume Analyzer & Comprehensive Match Engine")
+    st.caption("Perform deep AI candidate evaluations with detailed positive feedback, skill gap analysis, and hiring recommendations.")
 
     col_j, col_n = st.columns(2)
     with col_j:
-        job_options = [j['title'] for j in jobs] if jobs else ["Senior Software Engineer", "Product Manager"]
+        job_options = [j['title'] for j in jobs] if jobs else ["Senior Software Engineer", "AI Research Scientist", "Product Designer (UI/UX)"]
         target_job_title = st.selectbox("Target Job Position", job_options)
+        
+        # Selected job description context
+        selected_job = next((j for j in jobs if j['title'] == target_job_title), None)
+        job_desc_context = selected_job['desc'] if selected_job else "Target position responsibilities and requirements."
+        if selected_job:
+            st.caption(f"**Requisition:** {selected_job['dept']} | **Required Skills:** {selected_job['skills']}")
+
     with col_n:
         cand_name_input = st.text_input("Candidate Full Name", "Jordan Taylor")
 
-    resume_file = st.file_uploader("Upload Candidate Resume File", type=["pdf", "docx", "txt"], key="screener_file")
-    resume_text_input = st.text_area("Or Paste Resume Text Here", height=200)
+    st.subheader("Candidate Resume Input")
+    col_up, col_sample = st.columns([3, 1])
+    with col_sample:
+        if st.button("📄 Load Benchmark Resume"):
+            st.session_state.analyzer_sample_text = """Jordan Taylor
+Senior Full Stack Engineer
+Email: jordan.taylor@example.com | Phone: (555) 321-9876
 
-    if st.button("Run AI Screening Evaluation", type="primary"):
+Executive Summary:
+Results-driven Senior Engineer with 6+ years of experience building high-scale web applications using React, TypeScript, Node.js, and AWS. Proven track record of architecting cloud microservices and accelerating deployment velocity.
+
+Technical Capabilities:
+- Frontend: React, TypeScript, Next.js, Redux, Tailwind CSS
+- Backend: Node.js, Express, PostgreSQL, REST APIs, GraphQL
+- Cloud & DevOps: AWS (EC2, S3, Lambda), Docker, CI/CD, Git
+
+Key Experience:
+Senior Software Engineer | TechCorp (2021 - Present)
+- Led frontend architecture overhaul using React and TypeScript, reducing load times by 42% and raising Lighthouse scores to 95.
+- Designed Node.js microservices handling over 2M daily API requests with 99.98% uptime.
+- Mentored 5 junior engineers and established automated CI/CD testing pipelines.
+
+Education:
+B.S. in Computer Science, UC Berkeley"""
+            st.rerun()
+
+    resume_file = st.file_uploader("Upload Resume Document (PDF, DOCX, TXT)", type=["pdf", "docx", "txt"], key="screener_file")
+    
+    default_text = st.session_state.get("analyzer_sample_text", "")
+    resume_text_input = st.text_area("Or Paste Resume Text Below:", value=default_text, height=200, placeholder="Paste candidate resume content here...")
+
+    if st.button("⚡ Run Comprehensive AI Resume Evaluation", type="primary", use_container_width=True):
         extracted = parse_uploaded_file(resume_file) if resume_file else resume_text_input
-        if not extracted:
-            st.warning("Please upload a resume file or paste resume text.")
+        if not extracted.strip():
+            st.warning("Please upload a resume file or paste resume content to proceed.")
         else:
-            with st.spinner("AI evaluating candidate qualifications..."):
-                prompt = f"Evaluate this resume for target role '{target_job_title}'. Resume: {extracted[:2000]}"
-                ai_res = call_gemini_api(prompt)
+            with st.spinner("🤖 NexusTalent AI analyzing candidate background, qualifications, and gaps..."):
+                eval_res = perform_ai_resume_analysis(target_job_title, job_desc_context, cand_name_input, extracted)
+
+                st.divider()
+                st.subheader("📊 Candidate Evaluation Report")
+
+                # Decision Banner
+                score = eval_res.get("overall_score", 85)
+                rec = eval_res.get("recommendation", "Hire")
                 
-                new_candidate = {
-                    "id": f"c_{len(candidates)+1}",
-                    "name": cand_name_input,
-                    "role": target_job_title,
-                    "score": 92,
-                    "strengths": ["Strong technical foundation", "Demonstrated problem solving skills"],
-                    "weaknesses": ["Cloud deployment depth can be explored further"],
-                    "recommendation": "Strong Hire",
-                    "summary": f"{cand_name_input} demonstrates high alignment with the {target_job_title} role requirements."
-                }
+                banner_color = "#ecfdf5" if rec == "Strong Hire" else ("#eff6ff" if rec == "Hire" else ("#fffbeb" if rec == "Further Review" else "#fef2f2"))
+                text_color = "#047857" if rec == "Strong Hire" else ("#1d4ed8" if rec == "Hire" else ("#b45309" if rec == "Further Review" else "#dc2626"))
                 
-                candidates.append(new_candidate)
-                activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Analyzed resume for {cand_name_input}"})
-                st.success(f"Candidate {cand_name_input} analyzed and saved to your pipeline!")
-                st.json(new_candidate)
+                st.markdown(f"""
+                <div style="background-color: {banner_color}; border: 1px solid {text_color}; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2 style="margin:0; color: #0f172a; font-weight: 800;">{cand_name_input}</h2>
+                            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">Evaluated for <strong>{target_job_title}</strong></p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="background-color: {text_color}; color: white; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 16px;">
+                                {rec} ({score}% Match)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Metric Columns
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Overall Alignment", f"{score}%")
+                m2.metric("Technical Fit", f"{eval_res.get('tech_score', 80)}%")
+                m3.metric("Experience Depth", f"{eval_res.get('exp_score', 85)}%")
+                m4.metric("Soft Skills & Fit", f"{eval_res.get('soft_score', 80)}%")
+
+                st.progress(score / 100)
+
+                # Detailed Positives vs Negatives Feedback
+                col_pos, col_neg = st.columns(2)
+
+                with col_pos:
+                    st.markdown("### ✅ Positive Feedback & Pros")
+                    positives = eval_res.get("positive_feedback", [])
+                    for item in positives:
+                        st.success(f"**✓** {item}")
+
+                with col_neg:
+                    st.markdown("### ⚠️ Identified Gaps & Cons")
+                    negatives = eval_res.get("negative_feedback", [])
+                    for item in negatives:
+                        st.error(f"**✗** {item}")
+
+                # Executive Summary
+                st.subheader("💡 Executive Evaluation Summary")
+                st.info(eval_res.get("summary", "Candidate exhibits high technical competency."))
+
+                # Probing Questions
+                st.subheader("❓ Recommended Probing Interview Questions")
+                questions = eval_res.get("interview_questions", [])
+                for idx, q in enumerate(questions, 1):
+                    st.markdown(f"**{idx}.** {q}")
+
+                # Save Candidate Option
+                st.divider()
+                if st.button("💾 Save Candidate to Pipeline", use_container_width=True):
+                    new_candidate = {
+                        "id": f"c_{len(candidates)+1}",
+                        "name": cand_name_input,
+                        "role": target_job_title,
+                        "score": score,
+                        "strengths": positives[:3],
+                        "weaknesses": negatives[:2],
+                        "recommendation": rec,
+                        "summary": eval_res.get("summary", "")
+                    }
+                    candidates.append(new_candidate)
+                    activity_logs.append({"time": datetime.now().strftime("%H:%M:%S"), "msg": f"Saved {cand_name_input} ({score}% match) to pipeline."})
+                    st.success(f"Successfully added **{cand_name_input}** to candidate pipeline!")
 
 
 # PAGE 6: AI SCREENING CHAT
