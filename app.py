@@ -482,7 +482,7 @@ with st.sidebar:
 
 
 # PAGE 1: DASHBOARD
-elif navigation == "📊 Dashboard":
+if navigation == "📊 Dashboard":
     # Hero Welcome Banner
     st.markdown(f"""
     <div class="hero-banner">
